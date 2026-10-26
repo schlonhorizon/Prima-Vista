@@ -15,7 +15,7 @@ Klaviersystem/Violin-/Bassschlüssel, Tonumfang-Presets und Lagen-Gewichtung.
 | Teil | Thema                              | Status        |
 | ---- | ---------------------------------- | ------------- |
 | –    | Einzelnoten, Klaviersystem, Design | fertig        |
-| 1    | Musiktheorie-Kern                  | geplant       |
+| 1    | Musiktheorie-Kern                  | fertig        |
 | 2    | Intervalle                         | geplant       |
 | 3    | Akkorde                            | geplant       |
 | 4    | Tonart erkennen                    | geplant       |
@@ -124,7 +124,7 @@ erscheinen dezent ausgegraut.
 
 ---
 
-## Teil 1: Musiktheorie-Kern
+## Teil 1: Musiktheorie-Kern ✔
 
 - Intervalle (Nummer + Qualität), Berechnung zwischen zwei Tönen, Transposition, deutsche Namen.
 - Tonarten: alle 15 Dur und 15 Moll, Vorzeichnung, parallele Tonart, deutsche Namen

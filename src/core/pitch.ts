@@ -6,8 +6,16 @@
 
 export const STEPS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const;
 export type Step = (typeof STEPS)[number];
-/** -1 = flat, 0 = natural, 1 = sharp */
-export type Alter = -1 | 0 | 1;
+/** -2 = double flat, -1 = flat, 0 = natural, 1 = sharp, 2 = double sharp */
+export type Alter = -2 | -1 | 0 | 1 | 2;
+
+/** A pitch without octave, e.g. the tonic of a key or the root of a chord. */
+export interface PitchClass {
+  readonly step: Step;
+  readonly alter: Alter;
+}
+
+const ACCIDENTAL_ID: Record<Alter, string> = { [-2]: 'bb', [-1]: 'b', 0: '', 1: '#', 2: '##' };
 
 export interface Pitch {
   readonly step: Step;
@@ -38,34 +46,73 @@ export function fromDiatonicIndex(index: number, alter: Alter = 0): Pitch {
 
 /** Stable id used for storage keys and settings, e.g. "C4", "F#4", "Bb3". */
 export function pitchId(p: Pitch): string {
-  const acc = p.alter === 1 ? '#' : p.alter === -1 ? 'b' : '';
-  return `${p.step}${acc}${p.octave}`;
+  return `${pitchClassId(p)}${p.octave}`;
+}
+
+/** "C", "F#", "Bb", "C##" … */
+export function pitchClassId(p: PitchClass): string {
+  return `${p.step}${ACCIDENTAL_ID[p.alter]}`;
 }
 
 export function parsePitchId(id: string): Pitch | null {
-  const m = /^([A-G])(#|b)?(-?\d+)$/.exec(id);
+  const m = /^([A-G])(##|#|bb|b)?(-?\d+)$/.exec(id);
   if (!m) return null;
-  const alter: Alter = m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0;
-  return pitch(m[1] as Step, alter, Number(m[3]));
+  return pitch(m[1] as Step, parseAccidental(m[2]), Number(m[3]));
+}
+
+export function parsePitchClassId(id: string): PitchClass | null {
+  const m = /^([A-G])(##|#|bb|b)?$/.exec(id);
+  return m ? { step: m[1] as Step, alter: parseAccidental(m[2]) } : null;
+}
+
+function parseAccidental(acc: string | undefined): Alter {
+  return ({ '##': 2, '#': 1, b: -1, bb: -2 } as Record<string, Alter>)[acc ?? ''] ?? 0;
 }
 
 /** Key string in VexFlow format, e.g. "c#/4". */
 export function toVexKey(p: Pitch): string {
-  const acc = p.alter === 1 ? '#' : p.alter === -1 ? 'b' : '';
-  return `${p.step.toLowerCase()}${acc}/${p.octave}`;
+  return `${p.step.toLowerCase()}${ACCIDENTAL_ID[p.alter]}/${p.octave}`;
+}
+
+export function samePitchClass(a: PitchClass, b: PitchClass): boolean {
+  return a.step === b.step && a.alter === b.alter;
+}
+
+/** Semitone class 0–11 of a (spelled) pitch class. */
+export function chroma(p: PitchClass): number {
+  return (((STEP_SEMITONES[p.step] + p.alter) % 12) + 12) % 12;
 }
 
 const GERMAN_BASE: Record<Step, string> = { C: 'C', D: 'D', E: 'E', F: 'F', G: 'G', A: 'A', B: 'H' };
 
-/** German note name: C, Cis, Des, Es, As, H, B … optionally with octave number. */
+/** German flat names, which are irregular for E, A and B (H). */
+const GERMAN_FLAT: Record<Step, string> = { C: 'Ces', D: 'Des', E: 'Es', F: 'Fes', G: 'Ges', A: 'As', B: 'B' };
+const GERMAN_DOUBLE_FLAT: Record<Step, string> = {
+  C: 'Ceses', D: 'Deses', E: 'Eses', F: 'Feses', G: 'Geses', A: 'Asas', B: 'Heses',
+};
+
+/** German note name: C, Cis, Cisis, Des, Es, As, H, B, Heses … */
+export function germanPitchClassName(p: PitchClass): string {
+  switch (p.alter) {
+    case 0: return GERMAN_BASE[p.step];
+    case 1: return `${GERMAN_BASE[p.step]}is`;
+    case 2: return `${GERMAN_BASE[p.step]}isis`;
+    case -1: return GERMAN_FLAT[p.step];
+    case -2: return GERMAN_DOUBLE_FLAT[p.step];
+  }
+}
+
+/** German note name, optionally with octave number: "Cis4", "B3". */
 export function germanName(p: Pitch, withOctave = true): string {
-  let name: string;
-  if (p.alter === 0) name = GERMAN_BASE[p.step];
-  else if (p.alter === 1) name = `${GERMAN_BASE[p.step]}is`;
-  else if (p.step === 'B') name = 'B';
-  else if (p.step === 'E' || p.step === 'A') name = `${p.step}s`;
-  else name = `${GERMAN_BASE[p.step]}es`;
+  const name = germanPitchClassName(p);
   return withOctave ? `${name}${p.octave}` : name;
+}
+
+const ENGLISH_ACCIDENTAL: Record<Alter, string> = { [-2]: '𝄫', [-1]: '♭', 0: '', 1: '♯', 2: '𝄪' };
+
+/** English name with typographic accidentals, as used in chord symbols: "B♭", "F♯". */
+export function englishPitchClassName(p: PitchClass): string {
+  return `${p.step}${ENGLISH_ACCIDENTAL[p.alter]}`;
 }
 
 const SHARP_SPELLING: ReadonlyArray<readonly [Step, Alter]> = [

@@ -56,6 +56,7 @@ src/
   core/        Tonhöhen (Pitch, MIDI, deutsche Namen), Schlüssel, Notensatz (Staff-Zuordnung,
                Hilfslinien, Oktavierung), Tonumfang, Presets, Lagen-Gewichtung, Storage
   input/       InputHub + Quellen: Web MIDI, Computertastatur
+  theory/      Musiktheorie: Intervalle, Tonarten, Tonleiter-Katalog, Stufenakkorde, Benennungen
   exercises/   Aufgabenmodell (Task/Step), Generator „Einzelnoten“, Matcher, Auswahl
   stats/       Statistik pro Item (Treffer, Fehler, Zeiten, Verwechslungen)
   render/      Notenzeile bzw. Klaviersystem mit VexFlow
@@ -63,13 +64,4 @@ src/
   ui/          App-Verdrahtung, Bildschirmtastatur, Statistik nach Oktaven
 ```
 
-Vorbereitet für spätere Schritte:
-
-- **Intervalle, Akkorde, Phrasen:** Eine `Task` besteht aus `steps`, jeder Step aus mehreren
-  Tönen. Der `StepMatcher` prüft bereits gleichzeitig gehaltene Töne, der Trainer arbeitet
-  Steps der Reihe nach ab, der Renderer verteilt die Töne eines Steps auf beide Systeme.
-  Neue Übungen implementieren nur `Exercise.nextTask()`.
-- **Adaptive Gewichtung:** Der `WeightedSelector` zieht proportional zu
-  `Grundgewicht × Modifikatoren`. Ein adaptiver Faktor wird als `WeightModifier` ergänzt, der
-  aus `StatsStore.getItem()` (Trefferquote, Ø-Zeit, letzte 50 Versuche, zuletzt gesehen) einen
-  Multiplikator berechnet.
+Gesamtarchitektur, Designentscheidungen und die geplanten Teile stehen in [ROADMAP.md](ROADMAP.md).
