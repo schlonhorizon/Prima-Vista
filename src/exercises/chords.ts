@@ -116,6 +116,7 @@ export class ChordExercise implements Exercise {
       label: describeChord(r.chord, r.inversion),
       detail: r.pitches.map((p) => germanName(p)).join(' – '),
       chordWindowMs: config.chordWindowMs,
+      info: { kind: 'chord', chord: r.chord, inversion: r.inversion, pitches: r.pitches },
     };
   }
 

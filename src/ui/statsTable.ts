@@ -4,6 +4,8 @@ import type { StatsGroup, StatsRow } from '../stats/statsView';
 interface Totals {
   hits: number;
   misses: number;
+  assistedHits: number;
+  assistedMisses: number;
   timeSum: number;
   timeCount: number;
 }
@@ -11,7 +13,10 @@ interface Totals {
 const WEAK_RATE = 0.7;
 const WEAK_MIN_ATTEMPTS = 3;
 
-/** Statistics as collapsible groups; the groups come from the active exercise. */
+/**
+ * Statistics as collapsible groups; the groups come from the active exercise.
+ * Rate and average time only count answers without help; "Mit Hilfe" lists the rest.
+ */
 export class StatsTable {
   private openGroups = new Set<string>();
 
@@ -22,12 +27,14 @@ export class StatsTable {
   }
 
   private totals(keys: readonly string[]): Totals {
-    const t: Totals = { hits: 0, misses: 0, timeSum: 0, timeCount: 0 };
+    const t: Totals = { hits: 0, misses: 0, assistedHits: 0, assistedMisses: 0, timeSum: 0, timeCount: 0 };
     for (const key of keys) {
       const item = this.stats.getItem(key);
       if (!item) continue;
       t.hits += item.hits;
       t.misses += item.misses;
+      t.assistedHits += item.assistedHits ?? 0;
+      t.assistedMisses += item.assistedMisses ?? 0;
       t.timeSum += item.hitTimeSum;
       t.timeCount += item.hitTimeCount;
     }
@@ -51,18 +58,19 @@ export class StatsTable {
     summary.querySelector('.octave-name')!.textContent = group.title;
     const weakCount = rows.filter((r) => isWeak(r.totals)).length;
     const total = sum.hits + sum.misses;
-    summary.querySelector('.octave-figures')!.textContent =
-      total === 0
-        ? 'noch nicht geübt'
-        : `${sum.hits} ✓ · ${sum.misses} ✗ · ${percent(sum.hits / total)} · Ø ${formatAvg(sum)}` +
-          (weakCount > 0 ? ` · ${weakCount} schwach` : '');
+    const assisted = sum.assistedHits + sum.assistedMisses;
+    const parts: string[] = [];
+    if (total > 0) parts.push(`${sum.hits} ✓ · ${sum.misses} ✗ · ${percent(sum.hits / total)} · Ø ${formatAvg(sum)}`);
+    if (assisted > 0) parts.push(`${assisted} mit Hilfe`);
+    if (weakCount > 0) parts.push(`${weakCount} schwach`);
+    summary.querySelector('.octave-figures')!.textContent = parts.length > 0 ? parts.join(' · ') : 'noch nicht geübt';
     summary.classList.toggle('weak', weakCount > 0);
     details.appendChild(summary);
 
     const table = document.createElement('table');
     table.className = 'stats-table';
     const head = document.createElement('tr');
-    for (const [i, title] of [...group.columns, 'Richtig', 'Falsch', 'Quote', 'Ø Zeit'].entries()) {
+    for (const [i, title] of [...group.columns, 'Richtig', 'Falsch', 'Quote', 'Ø Zeit', 'Mit Hilfe'].entries()) {
       const th = document.createElement('th');
       th.textContent = title;
       if (i < group.columns.length) th.className = 'text';
@@ -91,6 +99,7 @@ export class StatsTable {
       String(t.misses),
       attempts > 0 ? percent(t.hits / attempts) : '–',
       formatAvg(t),
+      t.assistedHits + t.assistedMisses > 0 ? `${t.assistedHits} ✓ ${t.assistedMisses} ✗` : '–',
     ];
     const tr = document.createElement('tr');
     cells.forEach((text, i) => {

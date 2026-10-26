@@ -76,6 +76,8 @@ export class SettingsForm {
     this.select('coreLow').value = s.weighting.coreLow;
     this.select('coreHigh').value = s.weighting.coreHigh;
     this.input('decayPerOctave').value = String(s.weighting.decayPerOctave);
+    this.input('autoExplain').checked = s.autoExplain;
+    this.input('computerPiano').checked = s.computerPiano;
     this.input('showNoteNames').checked = s.showNoteNames;
     this.input('showComputerKeys').checked = s.showComputerKeys;
     this.input('selectionMode').checked = s.selectionMode;
@@ -151,6 +153,8 @@ export class SettingsForm {
         showCircle: this.input('showCircle').checked,
       },
       weighting: { coreLow, coreHigh, decayPerOctave: decay },
+      autoExplain: this.input('autoExplain').checked,
+      computerPiano: this.input('computerPiano').checked,
       showNoteNames: this.input('showNoteNames').checked,
       showComputerKeys: this.input('showComputerKeys').checked,
       selectionMode: this.input('selectionMode').checked,

@@ -60,6 +60,7 @@ export class KeyQuizExercise implements Exercise {
       itemKey: keySigItemKey(fifths),
       label: keyPairLabel(fifths),
       detail: signatureLabel(fifths),
+      info: { kind: 'keysig', fifths },
     };
   }
 

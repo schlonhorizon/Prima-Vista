@@ -16,7 +16,9 @@ import { effectiveRange, loadSettings, saveSettings, type Settings } from '../se
 import { StatsStore } from '../stats/statsStore';
 import { fifthsOf, germanKeyName } from '../theory/key';
 import { Trainer, type TaskResult } from '../trainer/trainer';
+import { KNOWLEDGE } from '../knowledge/providers';
 import { KeyQuizPanel } from './keyQuizPanel';
+import { KnowledgeUi } from './knowledgeUi';
 import { OnScreenKeyboard } from './onScreenKeyboard';
 import { SettingsForm } from './settingsForm';
 import { StatsTable } from './statsTable';
@@ -35,7 +37,13 @@ interface SessionStats {
 }
 
 /** Settings that only change the display, not the exercise. */
-const DISPLAY_ONLY: ReadonlyArray<keyof Settings> = ['showNoteNames', 'showComputerKeys', 'selectionMode'];
+const DISPLAY_ONLY: ReadonlyArray<keyof Settings> = [
+  'showNoteNames',
+  'showComputerKeys',
+  'selectionMode',
+  'autoExplain',
+  'computerPiano',
+];
 
 export class App {
   private settings: Settings;
@@ -51,6 +59,7 @@ export class App {
   private trainer: Trainer;
   private form!: SettingsForm;
   private keyQuiz!: KeyQuizPanel;
+  private knowledge!: KnowledgeUi;
   private session: SessionStats = { correct: 0, wrong: 0, timeSum: 0, timeCount: 0 };
 
   private feedbackEl = $('feedback');
@@ -111,6 +120,12 @@ export class App {
       });
     }
     this.setupSelection();
+    this.knowledge = new KnowledgeUi({
+      trainer: this.trainer,
+      autoExplain: () => this.settings.autoExplain,
+      pianoKeysActive: () => this.settings.computerPiano && this.trainer.currentTask()?.answer !== 'choice',
+      currentLesson: () => KNOWLEDGE[this.exercise().id]?.lesson ?? null,
+    });
     this.keyQuiz = new KeyQuizPanel(
       $('key-quiz'),
       ({ major, minor }) => {
@@ -206,6 +221,7 @@ export class App {
     const multi = task.answer === 'play' && taskPitches(task).length > 1;
     this.keyboard.setSelectionMode(this.settings.selectionMode && multi);
     $('selection-bar').hidden = !this.keyboard.isSelecting();
+    this.knowledge.onTask(task);
   }
 
   private showResult(r: TaskResult): void {
@@ -219,7 +235,7 @@ export class App {
         this.session.timeSum += r.reactionMs;
         this.session.timeCount++;
       }
-      this.feedbackEl.textContent = `Richtig: ${task.label}${time}`;
+      this.feedbackEl.textContent = `Richtig${r.assisted ? ' (mit Tipp)' : ''}: ${task.label}${time}`;
       this.feedbackEl.className = 'feedback correct';
       this.detailEl.textContent = task.detail ?? '';
       r.expected.forEach((m) => this.keyboard.flash(m, 'correct', 600));
@@ -242,6 +258,7 @@ export class App {
       r.expected.forEach((m) => this.keyboard.flash(m, 'hint', 2400));
     }
     this.keyboard.clearSelection();
+    this.knowledge.onResult(task);
     if (task.exerciseId === this.exercises.keys?.id && task.key) this.keyQuiz.showSolution(fifthsOf(task.key));
     $('m-last').textContent = r.reactionMs !== null ? formatMs(r.reactionMs) : '–';
     this.renderSession();
@@ -353,6 +370,8 @@ export class App {
     this.updateKeyboardLabels();
     this.updateModeNav();
     this.keyQuiz.setCircleVisible(this.settings.keyQuiz.showCircle);
+    this.computerKeys.setEnabled(this.settings.computerPiano);
+    this.knowledge.updateButtons();
     this.form.showFor(this.settings.practice);
     this.form.updateRangeInfo();
     this.renderStatsTable();

@@ -36,6 +36,24 @@
           <p id="feedback" class="feedback"></p>
           <p id="feedback-detail" class="feedback-detail"></p>
         </div>
+        <div class="knowledge-bar" role="toolbar" aria-label="Wissen">
+          <button type="button" class="quiet" id="tip-button">Tipp <kbd id="tip-key">H</kbd></button>
+          <button type="button" class="quiet" id="explain-button" disabled>Mehr erfahren <kbd>I</kbd></button>
+          <button type="button" class="quiet" id="lesson-button">Lektion <kbd id="lesson-key">L</kbd></button>
+        </div>
+      </section>
+
+      <section class="knowledge-card" id="knowledge-card" hidden aria-live="polite">
+        <header class="knowledge-head">
+          <h2 id="knowledge-title"></h2>
+          <button type="button" class="close" id="knowledge-close" aria-label="Schließen">×</button>
+        </header>
+        <div class="prose" id="knowledge-body"></div>
+        <p class="knowledge-note" id="knowledge-note"></p>
+        <footer class="knowledge-continue" id="knowledge-continue" hidden>
+          <button type="button" class="primary" id="continue-button">Weiter <kbd>Enter</kbd></button>
+          <span class="hint">oder eine beliebige Taste am Klavier</span>
+        </footer>
       </section>
 
       <section class="card answer-card" id="key-quiz" hidden>
@@ -178,7 +196,16 @@
             </p>
           </fieldset>
           <fieldset>
+            <legend>Wissen</legend>
+            <label class="check"><input type="checkbox" name="autoExplain" /> Erklärungen automatisch einblenden</label>
+            <p class="hint full">
+              Tipp (H), Mehr erfahren (I) und Lektion (L) gibt es immer auf Wunsch. Solange die
+              Computertastatur als Klavier dient, gilt in Klavier-Modi ⇧H und ⇧L.
+            </p>
+          </fieldset>
+          <fieldset>
             <legend>Eingabe und Anzeige</legend>
+            <label class="check" data-modes="notes intervals chords"><input type="checkbox" name="computerPiano" /> Computertastatur als Klavier</label>
             <label class="check" data-modes="notes intervals chords"><input type="checkbox" name="showNoteNames" /> Notennamen auf den Tasten</label>
             <label class="check" data-modes="notes intervals chords"><input type="checkbox" name="showComputerKeys" /> Computertasten auf den Tasten</label>
             <label class="check" data-modes="intervals chords">
@@ -199,6 +226,14 @@
         <button type="button" id="reset-stats" class="danger">Statistik zurücksetzen</button>
       </details>
     </main>
+
+    <dialog class="lesson-dialog" id="lesson-dialog" aria-labelledby="lesson-title">
+      <header class="lesson-head">
+        <h2 id="lesson-title"></h2>
+        <button type="button" class="close" id="lesson-close" aria-label="Lektion schließen">×</button>
+      </header>
+      <div class="prose" id="lesson-body"></div>
+    </dialog>
 
     <script type="module" src="/src/main.ts"></script>
   </body>

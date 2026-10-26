@@ -73,6 +73,10 @@ export interface Settings {
   intervals: IntervalSettings;
   chords: ChordSettings;
   keyQuiz: KeyQuizSettings;
+  /** Show the explanation after every answer (and wait until the player continues). */
+  autoExplain: boolean;
+  /** Use the computer keyboard as piano (A–K …). Off frees H and L as plain shortcuts. */
+  computerPiano: boolean;
   showNoteNames: boolean;
   showComputerKeys: boolean;
   /** On-screen keyboard: select keys and confirm for tasks with several notes. */
@@ -104,6 +108,8 @@ export function defaultSettings(): Settings {
     },
     chords: { kinds: 'triads', inversions: [0, 1, 2, 3], degrees: [1, 2, 3, 4, 5, 6, 7] },
     keyQuiz: { maxAccidentals: 7, showCircle: true },
+    autoExplain: false,
+    computerPiano: true,
     showNoteNames: false,
     showComputerKeys: true,
     selectionMode: true,
@@ -143,6 +149,8 @@ export function sanitize(raw: Record<string, unknown>): Settings {
     intervals: sanitizeIntervals(raw.intervals, d.intervals),
     chords: sanitizeChords(raw.chords, d.chords),
     keyQuiz: sanitizeKeyQuiz(raw.keyQuiz, d.keyQuiz),
+    autoExplain: bool(raw.autoExplain, d.autoExplain),
+    computerPiano: bool(raw.computerPiano, d.computerPiano),
     showNoteNames: bool(raw.showNoteNames, d.showNoteNames),
     showComputerKeys: bool(raw.showComputerKeys, d.showComputerKeys),
     selectionMode: bool(raw.selectionMode, d.selectionMode),

@@ -17,6 +17,11 @@ Modi:
 
 Für alle Modi:
 
+- **Wissensebene:** auf Wunsch ein **Tipp** während der Aufgabe (H bzw. ⇧H), **Mehr erfahren**
+  nach der Antwort (I) und eine **Lektion** pro Modus (L bzw. ⇧L). Versuche mit Tipp zählen in der
+  Statistik als „mit Hilfe“. Alle Texte stehen als Markdown in `src/content/` und lassen sich
+  ohne Programmierkenntnisse korrigieren und erweitern (Aufbau siehe Kommentare in den Dateien).
+
 - **Tonart:** fest gewählt oder zufällig (bis n Vorzeichen, mit/ohne Moll, Wechsel alle n Aufgaben),
   korrekte Vorzeichnung und enharmonisch korrekte Schreibweise.
 - **Klaviersystem:** Noten ab C4 im Violin-, darunter im Bassschlüssel. Bis zu 4 Hilfslinien
@@ -74,6 +79,8 @@ src/
                Hilfslinien, Oktavierung), Tonumfang, Presets, Lagen-Gewichtung, Storage
   input/       InputHub + Quellen: Web MIDI, Computertastatur
   theory/      Musiktheorie: Intervalle, Tonarten, Tonleiter-Katalog, Stufenakkorde, Benennungen
+  knowledge/   Wissensebene: Tipps, Erklärungen, Lektionen, Markdown-Darstellung
+  content/     Texte der Wissensebene (Markdown): lessons/ und knowledge/
   exercises/   Aufgabenmodell (Task/Step), Generator „Einzelnoten“, Matcher, Auswahl
   stats/       Statistik pro Item (Treffer, Fehler, Zeiten, Verwechslungen)
   render/      Notenzeile bzw. Klaviersystem mit VexFlow

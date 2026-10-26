@@ -129,6 +129,14 @@ export class IntervalExercise implements Exercise {
       label,
       detail: notes.map((p) => germanName(p)).join(' – '),
       chordWindowMs: config.chordWindowMs,
+      info: {
+        kind: 'interval',
+        lower: r.lower,
+        upper: r.upper,
+        interval: r.interval,
+        standard: r.standard,
+        presentation: r.presentation,
+      },
     };
   }
 
