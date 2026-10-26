@@ -42,7 +42,23 @@ const LAYOUT = {
 
 /** Draws one stave or a grand staff with the notes of a task. */
 export class StaffRenderer {
-  constructor(private container: HTMLElement) {}
+  private baseWidth: number;
+  private maxScale: number;
+  private fitHeight: boolean;
+
+  /**
+   * `baseWidth`: logical width before scaling (wider for longer examples); `maxScale` caps the zoom;
+   * `fitHeight` crops the drawing to its content instead of reserving room for extreme notes
+   * (for static examples – the practice staff keeps a stable height).
+   */
+  constructor(
+    private container: HTMLElement,
+    options: { baseWidth?: number; maxScale?: number; fitHeight?: boolean } = {},
+  ) {
+    this.baseWidth = options.baseWidth ?? BASE_WIDTH;
+    this.maxScale = options.maxScale ?? Infinity;
+    this.fitHeight = options.fitHeight ?? false;
+  }
 
   render(
     mode: StaffMode,
@@ -52,11 +68,11 @@ export class StaffRenderer {
   ): void {
     this.container.replaceChildren();
     const layout = mode === 'grand' ? LAYOUT.grand : LAYOUT.single;
-    const available = this.container.clientWidth || BASE_WIDTH;
-    const scale = Math.max(1, Math.min(layout.maxScale, available / BASE_WIDTH));
+    const available = this.container.clientWidth || this.baseWidth;
+    const scale = Math.max(0.6, Math.min(layout.maxScale, this.maxScale, available / this.baseWidth));
 
     const renderer = new Renderer(this.container as HTMLDivElement, Renderer.Backends.SVG);
-    renderer.resize(Math.round(BASE_WIDTH * scale), Math.round(layout.height * scale));
+    renderer.resize(Math.round(this.baseWidth * scale), Math.round(layout.height * scale));
     const ctx = renderer.getContext();
     ctx.scale(scale, scale);
 
@@ -65,7 +81,7 @@ export class StaffRenderer {
     const clefs = clefsOf(mode);
     const staves = new Map<Clef, Stave>();
     clefs.forEach((clef, i) => {
-      const stave = new Stave(layout.left, layout.staveY[i], BASE_WIDTH - layout.left - 10);
+      const stave = new Stave(layout.left, layout.staveY[i], this.baseWidth - layout.left - 10);
       stave.addClef(clef);
       if (fifths !== 0) stave.addKeySignature(vexKeySpec(fifths));
       stave.setContext(ctx).draw();
@@ -76,7 +92,10 @@ export class StaffRenderer {
       new StaveConnector(top, bottom).setType('brace').setContext(ctx).draw();
       new StaveConnector(top, bottom).setType('singleLeft').setContext(ctx).draw();
     }
-    if (steps.length === 0) return;
+    if (steps.length === 0) {
+      if (this.fitHeight) this.cropTo(staves, new Map(), false, scale);
+      return;
+    }
 
     const color = COLORS[highlight];
     const brackets: Array<{ note: StaveNote; ottava: Exclude<Ottava, 0> }> = [];
@@ -117,14 +136,40 @@ export class StaffRenderer {
     for (const [clef, voice] of voices) voice.draw(ctx, staves.get(clef)!);
 
     for (const { note, ottava } of brackets) drawOttava(ctx, note, ottava, color);
+    if (this.fitHeight) this.cropTo(staves, voices, brackets.length > 0, scale);
 
     const svg = this.container.querySelector('svg');
     svg?.setAttribute('role', 'img');
     svg?.setAttribute('aria-label', mode === 'grand' ? 'Klaviersystem' : 'Notenzeile');
   }
+
+  /** Shrinks the SVG to the staves and notes actually drawn. */
+  private cropTo(staves: Map<Clef, Stave>, voices: Map<Clef, Voice>, ottava: boolean, scale: number): void {
+    const svg = this.container.querySelector('svg');
+    if (!svg) return;
+    let top = Infinity;
+    let bottom = -Infinity;
+    for (const stave of staves.values()) {
+      top = Math.min(top, stave.getYForLine(0) - 22); // room for clef and key signature
+      bottom = Math.max(bottom, stave.getYForLine(4) + 22);
+    }
+    for (const voice of voices.values()) {
+      for (const note of voice.getTickables()) {
+        if (!(note instanceof StaveNote)) continue;
+        const box = note.getBoundingBox();
+        top = Math.min(top, box.getY() - (ottava ? 22 : 8));
+        bottom = Math.max(bottom, box.getY() + box.getH() + (ottava ? 22 : 8));
+      }
+    }
+    const height = bottom - top;
+    svg.setAttribute('viewBox', `0 ${top} ${this.baseWidth} ${height}`);
+    svg.setAttribute('height', String(Math.round(height * scale)));
+    svg.style.height = `${Math.round(height * scale)}px`;
+  }
 }
 
 /** Writes "8va"/"8vb"/"15ma"/"15mb" just outside the note head (beyond its ledger lines). */
+
 function drawOttava(ctx: RenderContext, note: StaveNote, ottava: Exclude<Ottava, 0>, color: string): void {
   const [number, suffix] = OTTAVA_TEXT[ottava];
   const box = note.getBoundingBox();

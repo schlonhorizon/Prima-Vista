@@ -31,6 +31,7 @@ export class ComputerKeyboardInput {
   private pressed = new Map<string, number>(); // code -> midi
   private layout: KeyboardLayoutMap | null = null;
   private listeners = new Set<() => void>();
+  private enabled = true;
 
   constructor(private hub: InputHub, initialOctave = 4) {
     this.octave = initialOctave;
@@ -47,6 +48,12 @@ export class ComputerKeyboardInput {
         this.notify();
       })
       .catch(() => undefined);
+  }
+
+  /** Switches the piano mapping on or off (off frees the letter keys for shortcuts). */
+  setEnabled(enabled: boolean): void {
+    if (!enabled) this.releaseAll();
+    this.enabled = enabled;
   }
 
   getOctave(): number {
@@ -85,7 +92,8 @@ export class ComputerKeyboardInput {
   }
 
   private onKeyDown = (e: KeyboardEvent): void => {
-    if (e.ctrlKey || e.metaKey || e.altKey || isEditable(e.target)) return;
+    // Shift is reserved for shortcuts (⇧H tip, ⇧L lesson).
+    if (!this.enabled || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || isEditable(e.target)) return;
     if (e.code === OCTAVE_DOWN_CODE || e.code === OCTAVE_UP_CODE) {
       e.preventDefault();
       if (!e.repeat) this.setOctave(this.octave + (e.code === OCTAVE_UP_CODE ? 1 : -1));

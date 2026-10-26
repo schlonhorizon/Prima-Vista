@@ -15,6 +15,7 @@ Klaviersystem/Violin-/Bassschlüssel, Tonumfang-Presets und Lagen-Gewichtung.
 | Teil | Thema                              | Status        |
 | ---- | ---------------------------------- | ------------- |
 | –    | Einzelnoten, Klaviersystem, Design | fertig        |
+| –    | Wissensebene (Tipps, Erklärungen, Lektionen) | fertig |
 | 1    | Musiktheorie-Kern                  | fertig        |
 | 2    | Intervalle                         | fertig        |
 | 3    | Akkorde                            | fertig        |
@@ -68,6 +69,8 @@ src/
   input/       InputHub + Quellen (Web MIDI, Computertastatur); Bildschirmtastatur in ui/
   render/      VexFlow-Renderer (Vorzeichnung, Vorzeichen-Logik, Klaviersystem)
   stats/       Einheitliche Statistik pro Übungselement
+  knowledge/   Wissensebene: Tipps, Erklärungen, Lektionen (ein Provider pro Modus), Markdown
+  content/     Alle Texte der Wissensebene als Markdown – getrennt vom Code
   modes.ts     Modus-Register (Name, Status, Übung, Einstellungen, Statistik-Ansicht)
   ui/          App-Shell, Modus-Navigation, Tastatur, Antwort-Panels, Statistik-Tabelle
   timing/      (Teil 5) Timing-Engine mit Metronom
@@ -121,6 +124,25 @@ mit Buttons beantwortet, die per Tab/Enter auch über die Tastatur bedienbar sin
 
 **Modus-Auswahl.** Ein Register beschreibt alle Modi mit Status; fertige sind wählbar, geplante
 erscheinen dezent ausgegraut.
+
+**Wissensebene (fester Bestandteil jedes Modus).** Musiktheorie wird vermittelt, ohne den
+Übungsfluss zu stören – alles ist ausgeblendet, bis man es anfordert:
+- **Tipp** (H, in Klavier-Modi ⇧H): Hinweis während der Aufgabe, der die Lösung nicht verrät.
+  Der Versuch zählt als „mit Hilfe“: eigene Zähler (`assistedHits/assistedMisses`), Markierung
+  `help` in den letzten Versuchen, eigene Spalte in der Statistik; Quote und Ø-Zeit zählen nur
+  Antworten ohne Hilfe.
+- **Mehr erfahren** (I): Erklärung zu genau dieser Aufgabe nach der Antwort. Während sie offen ist,
+  hält der Trainer an (weiter mit Enter, Button oder beliebiger Klaviertaste). Wird sie erst
+  während der nächsten Aufgabe geöffnet, verfällt deren Reaktionszeit. Optional automatisch.
+- **Lektion** (L, in Klavier-Modi ⇧L): Einführung pro Modus – was man lernt, warum es fürs
+  Blattspiel zählt, eine praktische Methode, Notenbeispiele (VexFlow) und ein Übungstipp.
+- **Inhalte** liegen als Markdown unter `src/content/`: `lessons/<modus>.md` und
+  `knowledge/<modus>.md` mit `## id`-Abschnitten und `{platzhaltern}`, die ein Provider in
+  `src/knowledge/` aus `Task.info` (den Theorie-Daten jeder Aufgabe) füllt. Notenbeispiele als
+  ```` ```noten ````-Block. Tests prüfen, dass jeder Abschnitt existiert, jeder Platzhalter gefüllt
+  wird, Tipps die Lösung nicht nennen und alle Notenbeispiele gültig sind.
+- **Pflicht für jeden neuen Teil:** Tipps, Erklärungen nach der Antwort und eine Lektion als
+  Inhaltsdateien plus Provider; ohne sie gilt ein Teil nicht als fertig.
 
 ---
 
@@ -191,6 +213,8 @@ Designentscheidungen:
 - Task-Steps erhalten `onset` und `duration` in Schlägen; Notation mit Takten, Balken, Pausen.
 - Statistik: Übungselement = Rhythmusmuster (z. B. `rhythm|dotted-quarter-eighth`), zusätzlich
   mittlere Abweichung.
+- Wissen: Lektion zu Notenwerten, Takt und Zählen („1 und 2 und“), Tipp = Zählhilfe für das
+  Muster, Erklärung = Silben/Zählweise des gespielten Rhythmus mit Abweichungen.
 
 ## Teil 6: Adaptive Logik (geplant)
 
@@ -201,9 +225,12 @@ Abhängig von: einheitliche Statistik (vorhanden). Wirkt auf alle Modi.
   - Langsamkeit (Reaktionszeit relativ zum Median aller Elemente des Modus),
   - Zeit seit „zuletzt geübt“ (wächst langsam bis zu einer Obergrenze),
   - Unbekannt-Bonus für nie geübte Elemente.
+  - Versuche „mit Hilfe“ (Tipp) zählen gesondert: ein Treffer mit Tipp senkt den Faktor weniger
+    als ein Treffer ohne Hilfe (eigener, einstellbarer Anteil).
 - Parameter in den Einstellungen: Einfluss Fehler, Einfluss Langsamkeit, Erholungsrate
   (Halbwertszeit in Versuchen), Einfluss der Pause, minimaler/maximaler Faktor.
 - Anzeige des aktuellen Faktors in der Statistik-Tabelle zur Feinjustierung.
+- Wissen: Erklärtext in den Einstellungen, wie die Parameter wirken (keine Lektion nötig).
 
 ## Teil 7: Abfolgen (geplant)
 
@@ -218,6 +245,8 @@ Abhängig von: 1, 3; optional 5.
 - **Passagen-Generator** (neues Modul `passages/`): Pipeline Harmonieplan → Melodie → Rhythmus →
   Hände → Notation. Wird in 8, 9, 11, 13 erweitert.
 - Ohne Tempo: Steps nacheinander; mit Tempo: Timing-Engine.
+- Wissen: Lektion zu Kadenzen, Stimmführung und Phrasenbau; Tipp = nächste Funktion bzw.
+  Richtung der Linie; Erklärung = Funktionsfolge (T–S–D–T), gemeinsame Töne, Leittonschritte.
 
 ## Teil 8: Vorauslesen und beide Hände (geplant)
 
@@ -228,6 +257,8 @@ Abhängig von: 7; 5 für die wandernde Variante.
   (Passagen-Generator mit zwei Stimmen).
 - Steps bekommen dafür eine explizite Hand-/System-Zuordnung pro Ton; die automatische
   Zuordnung (C4-Grenze, Akkorde zusammenhalten) bleibt der Standard für einhändige Aufgaben.
+- Wissen: Lektion zu Blickführung und Vorausschauen, Koordination beider Hände; Tipp = worauf als
+  Nächstes achten; Erklärung = Lesefehler-Muster.
 
 ## Teil 9: Leadsheets und Voicings (geplant)
 
@@ -236,6 +267,8 @@ Abhängig von: 1, 3, 7.
   Tonklassen (Matcher-Variante „pitch classes“, Lage egal).
 - Voicings: Shell (1-3-7, 1-7-3), Rootless (A/B-Form, 3-5-7-9 / 7-9-3-5) über ii–V–I in allen
   Tonarten; Voicing-Katalog im Theorie-Kern.
+- Wissen: Lektion zu Akkordsymbolen und Voicing-Typen; Tipp = Guide Tones (Terz/Septime);
+  Erklärung = Aufbau des Voicings und Stimmführung im ii–V–I.
 
 ## Teil 10: Tonleitern (geplant)
 
@@ -243,18 +276,25 @@ Abhängig von: 1 (Katalog vorhanden).
 - A: notierte Tonleiter auf-/abwärts spielen. B: nur Name, auswendig spielen, danach notiert zeigen.
 - Freischaltung: Dur/Moll → Pentatonik/Blues → Kirchentonarten → Jazz-Tonleitern; freigeschaltet
   bei Trefferquote ≥ x % über n Versuche (einstellbar).
+- Wissen: Die Lektion erklärt **jede Tonleiter** des Katalogs – was sie auszeichnet (Intervall-
+  folge, charakteristischer Ton, z. B. die große Sexte in Dorisch), wie sie klingt und wofür man
+  sie verwendet (Stil, Akkord, über den man sie spielt) – mit Notenbeispiel. Tipp = Fingersatz-
+  bzw. Struktur-Hinweis (Ganz-/Halbtonfolge); Erklärung = Aufbau der konkreten Tonleiter.
 
 ## Teil 11: Gehörbildung (geplant)
 
 Abhängig von: 5 (Audio-Engine), Inhalte aus 2, 3, 7.
 - App spielt Intervall/Akkord/Phrase, ich spiele nach; danach notiert gezeigt. Gleicher Matcher
   wie in 2/3/7, Task ohne sichtbare Noten bis zur Antwort.
+- Wissen: Lektion zu Hörstrategien (Bezugslieder, Funktion hören); Tipp = Bezugslied bzw.
+  Klangcharakter; Erklärung wie in Teil 2/3/7.
 
 ## Teil 12: Gemischter Modus (geplant)
 
 Abhängig von: allen fertigen Modi; 6 empfohlen.
 - Modi mit Gewichten; jede Aufgabe zieht erst den Modus, dann das Element.
 - „Tonart-Session“: eine Runde (n Aufgaben) in derselben Tonart über alle Modi.
+- Wissen: nutzt Tipps, Erklärungen und Lektionen der beteiligten Modi.
 
 ## Teil 13: Prima-Vista-Modus (Fernziel)
 
@@ -263,3 +303,5 @@ Abhängig von: 5, 7, 8 (Passagen-Generator, beide Hände, Timing).
   (Tonhöhe, Timing, ausgelassene Noten).
 - Später: MusicXML-Import in dasselbe Passagen-Modell; gemeinfreie Literatur (z. B. Bach-Choräle)
   als mitgelieferte Dateien.
+- Wissen: Lektion zur Vorbereitung eines Blattspiels (Tonart, Takt, Muster, schwierige Stellen
+  vorab erkennen); Erklärung = Auswertung mit den häufigsten Fehlerquellen.

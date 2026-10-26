@@ -19,6 +19,8 @@ export interface TaskResult {
   readonly expected: readonly number[];
   /** Text of a choice answer, e.g. "D-Dur / h-Moll". */
   readonly answerText?: string;
+  /** A tip was shown before the answer. */
+  readonly assisted: boolean;
 }
 
 export interface TrainerCallbacks {
@@ -47,6 +49,10 @@ export class Trainer {
   private matcher: StepMatcher | null = null;
   private startedAt = 0;
   private waiting = false;
+  /** Waiting after an answer and not advancing until resume() (e.g. explanation open). */
+  private held = false;
+  private assisted = false;
+  private timingValid = true;
   private nextTimer: number | undefined;
   private windowTimer: number | undefined;
   private timing: TrainerTiming;
@@ -70,6 +76,33 @@ export class Trainer {
     return this.waiting;
   }
 
+  isHeld(): boolean {
+    return this.held;
+  }
+
+  /** Marks the running task as answered with help (a tip was shown). */
+  markAssisted(): void {
+    if (this.task && !this.waiting) this.assisted = true;
+  }
+
+  /** The reaction time of the running task will not be recorded (e.g. a lesson was read). */
+  invalidateTiming(): void {
+    if (this.task && !this.waiting) this.timingValid = false;
+  }
+
+  /** Stops the automatic advance after an answer. Returns false if no answer is pending. */
+  hold(): boolean {
+    if (!this.waiting) return false;
+    window.clearTimeout(this.nextTimer);
+    this.held = true;
+    return true;
+  }
+
+  /** Continues after hold(). */
+  resume(): void {
+    if (this.held) this.next();
+  }
+
   setExercise(exercise: Exercise): void {
     this.exercise = exercise;
     this.next();
@@ -83,6 +116,9 @@ export class Trainer {
     this.stepIndex = 0;
     this.matcher = this.task.steps.length > 0 ? this.newMatcher() : null;
     this.waiting = false;
+    this.held = false;
+    this.assisted = false;
+    this.timingValid = true;
     this.callbacks.onTask(this.task);
     this.startedAt = performance.now();
     // Start timing when the task is actually on screen.
@@ -102,6 +138,11 @@ export class Trainer {
   }
 
   private onNote = (event: NoteEvent): void => {
+    // While held, any key on the piano continues – handy without a computer keyboard.
+    if (this.held && event.type === 'on') {
+      this.resume();
+      return;
+    }
     if (!this.task || this.task.answer !== 'play' || !this.matcher || this.waiting) return;
     this.handleResult(this.matcher.handle(event));
   };
@@ -145,21 +186,25 @@ export class Trainer {
     // Guard against event timestamps from a different time base.
     const time = eventTime >= this.startedAt - 1000 && eventTime <= now + 1000 ? eventTime : now;
     const elapsed = Math.max(0, time - this.startedAt);
-    const reactionMs = elapsed <= this.timing.maxReactionMs ? Math.round(elapsed) : null;
+    const reactionMs = this.timingValid && elapsed <= this.timing.maxReactionMs ? Math.round(elapsed) : null;
 
     this.waiting = true;
     window.clearTimeout(this.windowTimer);
-    this.stats.record(task.itemKey, { ok: correct, ms: reactionMs, played: details.played });
+    this.stats.record(task.itemKey, { ok: correct, ms: reactionMs, played: details.played, assisted: this.assisted });
     this.callbacks.onResult({
       task,
       correct,
       reactionMs,
+      assisted: this.assisted,
       expected: taskPitches(task).map(toMidi),
       ...details,
     });
-    this.nextTimer = window.setTimeout(
-      () => this.next(),
-      correct ? this.timing.afterCorrectMs : this.timing.afterWrongMs,
-    );
+    // onResult may already have held the trainer (explanation shown automatically).
+    if (!this.held) {
+      this.nextTimer = window.setTimeout(
+        () => this.next(),
+        correct ? this.timing.afterCorrectMs : this.timing.afterWrongMs,
+      );
+    }
   }
 }

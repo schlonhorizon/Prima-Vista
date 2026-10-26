@@ -52,6 +52,7 @@ export class SingleNoteExercise implements Exercise {
       steps: [{ pitches: [p] }],
       itemKey: singleNoteItemKey(mode, p),
       label: germanName(p),
+      info: { kind: 'note', pitch: p },
     };
   }
 
