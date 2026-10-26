@@ -18,9 +18,10 @@ import type { TaskStep } from '../exercises/types';
 export type NoteHighlight = 'none' | 'correct' | 'wrong';
 
 const COLORS: Record<NoteHighlight, string> = {
-  none: '#1a1a1a',
-  correct: '#1f8a4c',
-  wrong: '#c62f2f',
+  none: '#141414',
+  // Emerald and bordeaux, dark enough for strong contrast on the ivory sheet.
+  correct: '#1d6a4a',
+  wrong: '#8a1f33',
 };
 
 const OTTAVA_TEXT: Record<Exclude<Ottava, 0>, [string, string]> = {

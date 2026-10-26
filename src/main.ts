@@ -1,4 +1,6 @@
+import './fonts';
 import './style.css';
+import { migrateStorageKeys } from './core/migrations';
 import { createStorage } from './core/storage';
 import { App } from './ui/app';
 
@@ -15,4 +17,6 @@ async function waitForMusicFont(): Promise<void> {
 }
 
 await waitForMusicFont();
-new App(createStorage()).start();
+const storage = createStorage();
+migrateStorageKeys(storage);
+new App(storage).start();

@@ -64,13 +64,23 @@ export class OnScreenKeyboard {
   flash(midi: number, kind: KeyFlash, durationMs = 900): void {
     const key = this.keys.get(midi);
     if (!key) return;
-    // On narrow screens the keyboard scrolls horizontally; bring the key into view.
-    if (kind === 'hint') key.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+    if (kind === 'hint') this.revealKey(key);
     const cls = `flash-${kind}`;
     key.classList.remove(cls);
     void key.offsetWidth; // restart animation
     key.classList.add(cls);
     window.setTimeout(() => key.classList.remove(cls), durationMs);
+  }
+
+  /** On narrow screens the keyboard scrolls horizontally; bring the key into view without moving the page. */
+  private revealKey(key: HTMLElement): void {
+    const scroller = this.root.parentElement;
+    if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return;
+    const k = key.getBoundingClientRect();
+    const view = scroller.getBoundingClientRect();
+    if (k.left >= view.left && k.right <= view.right) return;
+    const centerOffset = k.left - view.left - (view.width - k.width) / 2;
+    scroller.scrollBy({ left: centerOffset, behavior: 'smooth' });
   }
 
   private setHeld(midi: number, held: boolean): void {

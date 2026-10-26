@@ -9,7 +9,7 @@ export function createStorage(): KeyValueStorage {
   const memory = new Map<string, string>();
   const ls = (() => {
     try {
-      const probe = '__notenleser_probe__';
+      const probe = '__prima_vista_probe__';
       window.localStorage.setItem(probe, probe);
       window.localStorage.removeItem(probe);
       return window.localStorage;

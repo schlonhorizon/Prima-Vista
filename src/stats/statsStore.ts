@@ -37,7 +37,7 @@ interface StatsData {
 }
 
 export const RECENT_LIMIT = 50;
-const STORAGE_KEY = 'notenleser.stats.v1';
+const STORAGE_KEY = 'prima-vista.stats.v1';
 
 export interface AttemptInput {
   ok: boolean;
