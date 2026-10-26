@@ -24,7 +24,7 @@ export interface Settings {
   showComputerKeys: boolean;
 }
 
-const STORAGE_KEY = 'notenleser.settings.v1';
+const STORAGE_KEY = 'prima-vista.settings.v1';
 const ACCIDENTAL_MODES: readonly AccidentalMode[] = ['none', 'sharps', 'flats', 'both'];
 
 export function defaultSettings(): Settings {
