@@ -1,3 +1,4 @@
+import './fonts';
 import './style.css';
 import { migrateStorageKeys } from './core/migrations';
 import { createStorage } from './core/storage';

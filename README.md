@@ -16,6 +16,10 @@ oder die Computertastatur (A–K weiße Tasten, W E T Z U O P schwarze Tasten, Y
 Fortschritt und Einstellungen liegen im `localStorage` des Browsers. Daten aus der Zeit, als
 die App noch „Notenleser“ hieß, werden beim ersten Start automatisch übernommen.
 
+Gestaltung: Flügelschwarz mit Lackglanz, Marineblau und Messing, Elfenbein für Text; die Noten
+stehen schwarz auf einem elfenbeinfarbenen Notenblatt. Schriften (Cormorant Garamond, Source
+Sans 3) sind per Fontsource eingebunden, die App lädt nichts von externen Servern.
+
 ## Lokal starten
 
 Voraussetzung: Node.js 20.19+ (empfohlen 22).

@@ -3,15 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0a0a0c" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <title>Prima Vista</title>
   </head>
   <body>
-    <header class="topbar">
-      <h1>Prima Vista</h1>
+    <header class="masthead">
+      <div class="wordmark">
+        <svg class="ornament" viewBox="0 0 48 48" aria-hidden="true">
+          <!-- Stylised grand piano seen from above: curved rim, lid hinge, keyboard. -->
+          <path d="M9 41V9.5C9 6.5 11 5 14 5c5 0 7 4.5 9.5 10.5 2.6 6.2 6 9 10.5 11.5 3 1.7 5 3.6 5 7.5V41Z" />
+          <path d="M13 34V11" class="thin" />
+          <path d="M9 36h30" class="thin" />
+          <path d="M12 36v5M15 36v5M18 36v5M21 36v5M24 36v5M27 36v5M30 36v5M33 36v5M36 36v5" class="keys" />
+        </svg>
+        <div>
+          <h1>Prima Vista</h1>
+          <p class="tagline">Notenlesen am Klavier</p>
+        </div>
+      </div>
       <div id="midi-status" class="midi-status" role="status"></div>
     </header>
+    <div class="brass-rule" aria-hidden="true"><span></span></div>
 
     <main class="layout">
       <section class="card staff-card">
@@ -29,7 +43,7 @@
 
       <section class="card keyboard-card">
         <div class="keyboard-bar">
-          <span>Computertastatur: Oktave <strong id="pc-octave">4</strong></span>
+          <span class="eyebrow">Computertastatur · Oktave <strong id="pc-octave">4</strong></span>
           <span class="keyboard-buttons">
             <button type="button" id="octave-down" title="Oktave tiefer">− Oktave</button>
             <button type="button" id="octave-up" title="Oktave höher">+ Oktave</button>

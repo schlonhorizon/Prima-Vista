@@ -12,6 +12,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fontsource/cormorant-garamond": "^5.3.0",
+    "@fontsource/source-sans-3": "^5.3.1",
     "vexflow": "^5.0.0"
   },
   "devDependencies": {
