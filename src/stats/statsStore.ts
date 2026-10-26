@@ -6,8 +6,8 @@ import type { KeyValueStorage } from '../core/storage';
  * An "item" is whatever an exercise asks for, identified by a string key such
  * as "note|treble|C4", "interval|M3|up|mel" or "keysig|-3". An adaptive selector
  * can read `getItem()` to weight weak items (low hit rate, slow reactions, not
- * seen for a long time). Attempts with help are counted separately and marked
- * in `recent`, so the adaptive logic can treat them differently.
+ * seen for a long time). Attempts with help and skipped tasks are counted
+ * separately and marked in `recent`, so the adaptive logic can treat them differently.
  */
 
 export interface Attempt {
@@ -18,6 +18,8 @@ export interface Attempt {
   readonly ms: number | null;
   /** Answered with help (a tip was shown). */
   readonly help?: boolean;
+  /** Skipped without an answer. */
+  readonly skipped?: boolean;
 }
 
 export interface ItemStats {
@@ -27,6 +29,8 @@ export interface ItemStats {
   /** Answers given after looking at a tip; kept apart from hits/misses and times. */
   assistedHits: number;
   assistedMisses: number;
+  /** Tasks skipped without an answer – neither hit nor miss. */
+  skipped: number;
   /** Sum and count of reaction times of correct answers (all time). */
   hitTimeSum: number;
   hitTimeCount: number;
@@ -52,6 +56,8 @@ export interface AttemptInput {
   played?: readonly number[];
   /** A tip was used for this attempt. */
   assisted?: boolean;
+  /** The task was skipped (ok and ms are ignored). */
+  skipped?: boolean;
   t?: number;
 }
 
@@ -66,6 +72,13 @@ export class StatsStore {
   record(itemKey: string, attempt: AttemptInput): void {
     const item = (this.data.items[itemKey] ??= emptyItem());
     const t = attempt.t ?? Date.now();
+    if (attempt.skipped) {
+      item.skipped++;
+      this.pushRecent(item, { t, ok: false, ms: null, skipped: true });
+      item.lastSeen = t;
+      this.save();
+      return;
+    }
     if (attempt.assisted) {
       if (attempt.ok) item.assistedHits++;
       else item.assistedMisses++;
@@ -83,10 +96,14 @@ export class StatsStore {
       item.confusions[key] = (item.confusions[key] ?? 0) + 1;
     }
     const ms = attempt.ms === null ? null : Math.round(attempt.ms);
-    item.recent.push(attempt.assisted ? { t, ok: attempt.ok, ms, help: true } : { t, ok: attempt.ok, ms });
-    if (item.recent.length > RECENT_LIMIT) item.recent.splice(0, item.recent.length - RECENT_LIMIT);
+    this.pushRecent(item, attempt.assisted ? { t, ok: attempt.ok, ms, help: true } : { t, ok: attempt.ok, ms });
     item.lastSeen = t;
     this.save();
+  }
+
+  private pushRecent(item: ItemStats, attempt: Attempt): void {
+    item.recent.push(attempt);
+    if (item.recent.length > RECENT_LIMIT) item.recent.splice(0, item.recent.length - RECENT_LIMIT);
   }
 
   getItem(itemKey: string): Readonly<ItemStats> | undefined {
@@ -134,6 +151,7 @@ function emptyItem(): ItemStats {
     misses: 0,
     assistedHits: 0,
     assistedMisses: 0,
+    skipped: 0,
     hitTimeSum: 0,
     hitTimeCount: 0,
     recent: [],

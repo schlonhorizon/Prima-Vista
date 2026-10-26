@@ -17,9 +17,12 @@ Modi:
 
 Für alle Modi:
 
-- **Wissensebene:** auf Wunsch ein **Tipp** während der Aufgabe (H bzw. ⇧H), **Mehr erfahren**
-  nach der Antwort (I) und eine **Lektion** pro Modus (L bzw. ⇧L). Versuche mit Tipp zählen in der
-  Statistik als „mit Hilfe“. Alle Texte stehen als Markdown in `src/content/` und lassen sich
+- **Wissensebene:** auf Wunsch ein **Tipp** während der Aufgabe (N), **Mehr erfahren** nach der
+  Antwort (M) und eine **Lektion** pro Modus (B). Versuche mit Tipp zählen in der Statistik als
+  „mit Hilfe“.
+- **Überspringen** (→): zeigt die Lösung und geht weiter; zählt in der Statistik als
+  „übersprungen“, nicht als Fehler. Alle Tastenkürzel zeigt **?** – keines liegt auf den
+  Klaviertasten der Computertastatur. Alle Texte stehen als Markdown in `src/content/` und lassen sich
   ohne Programmierkenntnisse korrigieren und erweitern (Aufbau siehe Kommentare in den Dateien).
 
 - **Tonart:** fest gewählt oder zufällig (bis n Vorzeichen, mit/ohne Moll, Wechsel alle n Aufgaben),

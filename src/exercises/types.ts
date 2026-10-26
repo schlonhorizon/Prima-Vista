@@ -51,6 +51,11 @@ export interface Task {
   readonly message?: string;
   /** Theory data for the knowledge layer. */
   readonly info?: TaskInfo;
+  /**
+   * Statistics keys a skip is recorded under; defaults to [itemKey]. Tasks made of
+   * several elements (e.g. a rhythm of several patterns) list all of them.
+   */
+  readonly statsKeys?: readonly string[];
   /** All notes of a step must be struck within this window (ms); 0 = no limit. */
   readonly chordWindowMs?: number;
 }

@@ -127,20 +127,27 @@ erscheinen dezent ausgegraut.
 
 **Wissensebene (fester Bestandteil jedes Modus).** Musiktheorie wird vermittelt, ohne den
 Übungsfluss zu stören – alles ist ausgeblendet, bis man es anfordert:
-- **Tipp** (H, in Klavier-Modi ⇧H): Hinweis während der Aufgabe, der die Lösung nicht verrät.
+- **Tipp** (N): Hinweis während der Aufgabe, der die Lösung nicht verrät.
   Der Versuch zählt als „mit Hilfe“: eigene Zähler (`assistedHits/assistedMisses`), Markierung
   `help` in den letzten Versuchen, eigene Spalte in der Statistik; Quote und Ø-Zeit zählen nur
   Antworten ohne Hilfe.
-- **Mehr erfahren** (I): Erklärung zu genau dieser Aufgabe nach der Antwort. Während sie offen ist,
+- **Mehr erfahren** (M): Erklärung zu genau dieser Aufgabe nach der Antwort. Während sie offen ist,
   hält der Trainer an (weiter mit Enter, Button oder beliebiger Klaviertaste). Wird sie erst
   während der nächsten Aufgabe geöffnet, verfällt deren Reaktionszeit. Optional automatisch.
-- **Lektion** (L, in Klavier-Modi ⇧L): Einführung pro Modus – was man lernt, warum es fürs
+- **Lektion** (B): Einführung pro Modus – was man lernt, warum es fürs
   Blattspiel zählt, eine praktische Methode, Notenbeispiele (VexFlow) und ein Übungstipp.
 - **Inhalte** liegen als Markdown unter `src/content/`: `lessons/<modus>.md` und
   `knowledge/<modus>.md` mit `## id`-Abschnitten und `{platzhaltern}`, die ein Provider in
   `src/knowledge/` aus `Task.info` (den Theorie-Daten jeder Aufgabe) füllt. Notenbeispiele als
   ```` ```noten ````-Block. Tests prüfen, dass jeder Abschnitt existiert, jeder Platzhalter gefüllt
   wird, Tipps die Lösung nicht nennen und alle Notenbeispiele gültig sind.
+- **Überspringen** (→): zeigt die Lösung (mit „Mehr erfahren“) und geht weiter. Zählt weder als
+  Treffer noch als Fehler, sondern als eigene Kategorie (`skipped`, Markierung in den letzten
+  Versuchen, eigene Spalte in der Statistik) – die adaptive Logik kann es gesondert werten.
+- **Tastenkürzel** liegen nie auf Klaviertasten der Computertastatur (A–Ä, W–P, Y/X): Wissen auf
+  B N M (rechte untere Reihe), Ablauf auf → / Enter / Esc, Leertaste für Bestätigen bzw. Tippen,
+  Übersicht mit ?. Ein Test prüft die Konfliktfreiheit; neue Kürzel kommen ins zentrale Register
+  `ui/shortcuts.ts`.
 - **Pflicht für jeden neuen Teil:** Tipps, Erklärungen nach der Antwort und eine Lektion als
   Inhaltsdateien plus Provider; ohne sie gilt ein Teil nicht als fertig.
 
@@ -225,6 +232,7 @@ Abhängig von: einheitliche Statistik (vorhanden). Wirkt auf alle Modi.
   - Langsamkeit (Reaktionszeit relativ zum Median aller Elemente des Modus),
   - Zeit seit „zuletzt geübt“ (wächst langsam bis zu einer Obergrenze),
   - Unbekannt-Bonus für nie geübte Elemente.
+  - Übersprungene Aufgaben zählen gesondert (z. B. wie ein halber Fehler, einstellbar).
   - Versuche „mit Hilfe“ (Tipp) zählen gesondert: ein Treffer mit Tipp senkt den Faktor weniger
     als ein Treffer ohne Hilfe (eigener, einstellbarer Anteil).
 - Parameter in den Einstellungen: Einfluss Fehler, Einfluss Langsamkeit, Erholungsrate

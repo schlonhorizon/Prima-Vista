@@ -36,10 +36,12 @@
           <p id="feedback" class="feedback"></p>
           <p id="feedback-detail" class="feedback-detail"></p>
         </div>
-        <div class="knowledge-bar" role="toolbar" aria-label="Wissen">
-          <button type="button" class="quiet" id="tip-button">Tipp <kbd id="tip-key">H</kbd></button>
-          <button type="button" class="quiet" id="explain-button" disabled>Mehr erfahren <kbd>I</kbd></button>
-          <button type="button" class="quiet" id="lesson-button">Lektion <kbd id="lesson-key">L</kbd></button>
+        <div class="knowledge-bar" role="toolbar" aria-label="Wissen und Ablauf">
+          <button type="button" class="quiet" id="tip-button">Tipp <kbd data-shortcut="tip"></kbd></button>
+          <button type="button" class="quiet" id="explain-button" disabled>Mehr erfahren <kbd data-shortcut="explain"></kbd></button>
+          <button type="button" class="quiet" id="lesson-button">Lektion <kbd data-shortcut="lesson"></kbd></button>
+          <button type="button" class="quiet" id="skip-button">Überspringen <kbd data-shortcut="skip"></kbd></button>
+          <button type="button" class="quiet" id="shortcuts-button" aria-label="Tastenkürzel anzeigen">Tastenkürzel <kbd data-shortcut="help"></kbd></button>
         </div>
       </section>
 
@@ -51,7 +53,7 @@
         <div class="prose" id="knowledge-body"></div>
         <p class="knowledge-note" id="knowledge-note"></p>
         <footer class="knowledge-continue" id="knowledge-continue" hidden>
-          <button type="button" class="primary" id="continue-button">Weiter <kbd>Enter</kbd></button>
+          <button type="button" class="primary" id="continue-button">Weiter <kbd data-shortcut="next"></kbd></button>
           <span class="hint">oder eine beliebige Taste am Klavier</span>
         </footer>
       </section>
@@ -199,8 +201,8 @@
             <legend>Wissen</legend>
             <label class="check"><input type="checkbox" name="autoExplain" /> Erklärungen automatisch einblenden</label>
             <p class="hint full">
-              Tipp (H), Mehr erfahren (I) und Lektion (L) gibt es immer auf Wunsch. Solange die
-              Computertastatur als Klavier dient, gilt in Klavier-Modi ⇧H und ⇧L.
+              Tipp (N), Mehr erfahren (M) und Lektion (B) gibt es immer auf Wunsch; alle Tastenkürzel
+              zeigt <kbd>?</kbd>.
             </p>
           </fieldset>
           <fieldset>
@@ -233,6 +235,18 @@
         <button type="button" class="close" id="lesson-close" aria-label="Lektion schließen">×</button>
       </header>
       <div class="prose" id="lesson-body"></div>
+    </dialog>
+
+    <dialog class="lesson-dialog shortcuts-dialog" id="shortcuts-dialog" aria-labelledby="shortcuts-title">
+      <header class="lesson-head">
+        <h2 id="shortcuts-title">Tastenkürzel</h2>
+        <button type="button" class="close" id="shortcuts-close" aria-label="Übersicht schließen">×</button>
+      </header>
+      <p class="shortcuts-intro">
+        Alle Kürzel liegen außerhalb der Klaviertasten der Computertastatur – du kannst spielen, ohne
+        versehentlich etwas auszulösen.
+      </p>
+      <dl class="shortcuts-list" id="shortcuts-list"></dl>
     </dialog>
 
     <script type="module" src="/src/main.ts"></script>

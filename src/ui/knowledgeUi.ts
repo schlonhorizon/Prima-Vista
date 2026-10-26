@@ -15,8 +15,6 @@ export interface KnowledgeUiHooks {
   trainer: Trainer;
   /** Explanations open automatically after every answer. */
   autoExplain(): boolean;
-  /** True while letter keys play the piano (then H and L need Shift). */
-  pianoKeysActive(): boolean;
   /** Lesson for the active mode (also when no task is running). */
   currentLesson(): string | null;
 }
@@ -24,8 +22,9 @@ export interface KnowledgeUiHooks {
 type CardKind = 'tip' | 'explanation';
 
 /**
- * The knowledge layer in the UI: tip during a task (H), explanation after the
- * answer (I) and the lesson of the mode (L). Everything is hidden until asked for.
+ * The knowledge layer in the UI: tip during a task, explanation after the answer
+ * and the lesson of the mode. Everything is hidden until asked for; the keyboard
+ * shortcuts are dispatched by the App (see shortcuts.ts).
  */
 export class KnowledgeUi {
   private task: Task | null = null;
@@ -46,7 +45,6 @@ export class KnowledgeUi {
     this.dialog.addEventListener('close', () => {
       if (!this.open && this.hooks.trainer.isHeld()) this.hooks.trainer.resume();
     });
-    window.addEventListener('keydown', this.onKey);
   }
 
   /** A new task is on screen. */
@@ -64,11 +62,8 @@ export class KnowledgeUi {
     this.updateButtons();
   }
 
-  /** Updates shortcut hints (they depend on the input mode). */
+  /** Enables the buttons that make sense right now. */
   updateButtons(): void {
-    const shift = this.hooks.pianoKeysActive() ? '⇧' : '';
-    $('tip-key').textContent = `${shift}H`;
-    $('lesson-key').textContent = `${shift}L`;
     const running = this.task !== null && !this.hooks.trainer.isWaiting();
     const tipAvailable = running && !!this.task && !!this.provider(this.task)?.tip(this.task);
     $<HTMLButtonElement>('tip-button').disabled = !tipAvailable;
@@ -77,13 +72,32 @@ export class KnowledgeUi {
     explain.disabled = !this.answered;
     explain.title = running && this.answered ? 'Erklärung zur vorigen Aufgabe' : 'Erklärung zur Aufgabe';
     $<HTMLButtonElement>('lesson-button').disabled = !this.hooks.currentLesson();
+    $<HTMLButtonElement>('skip-button').disabled = !running || !!this.task?.message;
   }
 
   private provider(task: Task): KnowledgeProvider | undefined {
     return KNOWLEDGE[task.exerciseId];
   }
 
-  private showTip(): void {
+  isDialogOpen(): boolean {
+    return this.dialog.open;
+  }
+
+  /** Enter: continue after reading. Returns true if it did something. */
+  continueIfHeld(): boolean {
+    if (!this.hooks.trainer.isHeld()) return false;
+    this.close();
+    return true;
+  }
+
+  /** Esc: closes the card. Returns true if it did something. */
+  closeCard(): boolean {
+    if (!this.open) return false;
+    this.close();
+    return true;
+  }
+
+  showTip(): void {
     const task = this.task;
     if (!task || this.hooks.trainer.isWaiting()) return;
     const tip = this.provider(task)?.tip(task);
@@ -94,7 +108,7 @@ export class KnowledgeUi {
     this.updateButtons();
   }
 
-  private toggleExplanation(): void {
+  toggleExplanation(): void {
     if (this.open === 'explanation') this.close();
     else this.showExplanation();
   }
@@ -112,7 +126,7 @@ export class KnowledgeUi {
     this.showCard('explanation', `Mehr erfahren: ${task.label}`, text);
   }
 
-  private openLesson(): void {
+  openLesson(): void {
     const path = this.hooks.currentLesson();
     if (!path) return;
     const md = contentFile(path);
@@ -149,39 +163,4 @@ export class KnowledgeUi {
     this.hideCard();
     if (this.hooks.trainer.isHeld()) this.hooks.trainer.resume();
   }
-
-  private onKey = (e: KeyboardEvent): void => {
-    if (e.ctrlKey || e.metaKey || e.altKey || this.dialog.open) return;
-    const target = e.target as HTMLElement | null;
-    if (target && (['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable)) return;
-    const plainLetters = !this.hooks.pianoKeysActive();
-    switch (e.code) {
-      case 'KeyI':
-        e.preventDefault();
-        this.toggleExplanation();
-        break;
-      case 'KeyH':
-        if (e.shiftKey || plainLetters) {
-          e.preventDefault();
-          this.showTip();
-        }
-        break;
-      case 'KeyL':
-        if (e.shiftKey || plainLetters) {
-          e.preventDefault();
-          this.openLesson();
-        }
-        break;
-      case 'Enter':
-      case 'NumpadEnter':
-        if (this.hooks.trainer.isHeld() && target?.tagName !== 'BUTTON') {
-          e.preventDefault();
-          this.close();
-        }
-        break;
-      case 'Escape':
-        if (this.open) this.close();
-        break;
-    }
-  };
 }

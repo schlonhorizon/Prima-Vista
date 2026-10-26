@@ -7,7 +7,7 @@ import { KeyContext } from '../exercises/keyContext';
 import { WeightedSelector } from '../exercises/selection';
 import { SingleNoteExercise } from '../exercises/singleNote';
 import { taskPitches, type Exercise, type Task } from '../exercises/types';
-import { ComputerKeyboardInput, OCTAVE_DOWN_CODE, OCTAVE_UP_CODE } from '../input/computerKeyboard';
+import { ComputerKeyboardInput, OCTAVE_DOWN_CODE, OCTAVE_UP_CODE, PIANO_CODES } from '../input/computerKeyboard';
 import { InputHub } from '../input/inputHub';
 import { MidiInput, type MidiStatus } from '../input/midiInput';
 import { MODES, type PracticeModeId } from '../modes';
@@ -21,6 +21,7 @@ import { KeyQuizPanel } from './keyQuizPanel';
 import { KnowledgeUi } from './knowledgeUi';
 import { OnScreenKeyboard } from './onScreenKeyboard';
 import { SettingsForm } from './settingsForm';
+import { isTypingTarget, labelShortcutHints, matches, SHORTCUTS, type ShortcutId } from './shortcuts';
 import { StatsTable } from './statsTable';
 
 function $<T extends HTMLElement>(id: string): T {
@@ -120,10 +121,10 @@ export class App {
       });
     }
     this.setupSelection();
+    this.setupShortcuts();
     this.knowledge = new KnowledgeUi({
       trainer: this.trainer,
       autoExplain: () => this.settings.autoExplain,
-      pianoKeysActive: () => this.settings.computerPiano && this.trainer.currentTask()?.answer !== 'choice',
       currentLesson: () => KNOWLEDGE[this.exercise().id]?.lesson ?? null,
     });
     this.keyQuiz = new KeyQuizPanel(
@@ -226,10 +227,15 @@ export class App {
 
   private showResult(r: TaskResult): void {
     const { task } = r;
-    this.staff.render(task.layout, task.steps, r.correct ? 'correct' : 'wrong', task.key);
+    this.staff.render(task.layout, task.steps, r.skipped ? 'none' : r.correct ? 'correct' : 'wrong', task.key);
     const time = r.reactionMs !== null ? ` · ${formatMs(r.reactionMs)}` : '';
     const names = (midis: readonly number[]) => midis.map((m) => germanName(midiToPitch(m))).join(', ');
-    if (r.correct) {
+    if (r.skipped) {
+      this.feedbackEl.textContent = `Übersprungen – Lösung: ${task.label}`;
+      this.feedbackEl.className = 'feedback skipped';
+      this.detailEl.textContent = task.detail ?? '';
+      r.expected.forEach((m) => this.keyboard.flash(m, 'hint', 2400));
+    } else if (r.correct) {
       this.session.correct++;
       if (r.reactionMs !== null) {
         this.session.timeSum += r.reactionMs;
@@ -270,13 +276,67 @@ export class App {
     const confirm = $<HTMLButtonElement>('confirm-selection');
     this.keyboard.onSelectionChange((selected) => (confirm.disabled = selected.length === 0));
     confirm.addEventListener('click', () => this.keyboard.confirmSelection());
-    window.addEventListener('keydown', (e) => {
-      if (e.code !== 'Space' || !this.keyboard.isSelecting()) return;
-      const target = e.target as HTMLElement | null;
-      if (target && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON', 'SUMMARY'].includes(target.tagName)) return;
-      e.preventDefault();
-      this.keyboard.confirmSelection();
-    });
+  }
+
+  // --- Keyboard shortcuts (one handler for the whole app) ----------------
+
+  private setupShortcuts(): void {
+    labelShortcutHints();
+    $('skip-button').addEventListener('click', () => this.trainer.skip());
+    $('shortcuts-button').addEventListener('click', () => this.openShortcuts());
+    $('shortcuts-close').addEventListener('click', () => $<HTMLDialogElement>('shortcuts-dialog').close());
+    window.addEventListener('keydown', (e) => this.onShortcut(e));
+  }
+
+  private onShortcut(e: KeyboardEvent): void {
+    if (isTypingTarget(e) || $<HTMLDialogElement>('shortcuts-dialog').open) return;
+    if (this.knowledge.isDialogOpen()) return; // the lesson dialog handles Esc itself
+    const target = e.target as HTMLElement | null;
+    const onButton = target?.tagName === 'BUTTON' || target?.tagName === 'SUMMARY';
+    const run = (id: ShortcutId, action: () => boolean | void) => {
+      if (!matches(e, id)) return false;
+      if (action() !== false) e.preventDefault();
+      return true;
+    };
+    run('tip', () => this.knowledge.showTip()) ||
+      run('explain', () => this.knowledge.toggleExplanation()) ||
+      run('lesson', () => this.knowledge.openLesson()) ||
+      run('skip', () => this.trainer.skip()) ||
+      run('help', () => this.openShortcuts()) ||
+      run('close', () => this.knowledge.closeCard()) ||
+      (!onButton && run('next', () => this.knowledge.continueIfHeld())) ||
+      (!onButton && run('confirm', () => {
+        if (!this.keyboard.isSelecting()) return false;
+        this.keyboard.confirmSelection();
+      }));
+  }
+
+  private openShortcuts(): void {
+    const label = (code: string) => this.computerKeys.keyLabel(code);
+    const white = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote'];
+    const black = PIANO_CODES.filter((c) => !white.includes(c) && c !== OCTAVE_DOWN_CODE && c !== OCTAVE_UP_CODE);
+    const rows: [string[], string][] = [
+      ...(['tip', 'explain', 'lesson', 'skip', 'next', 'confirm', 'close', 'help'] as const).map(
+        (id) => [[SHORTCUTS[id].display], SHORTCUTS[id].description] as [string[], string],
+      ),
+      [[label(OCTAVE_DOWN_CODE), label(OCTAVE_UP_CODE)], 'Oktave der Computertastatur tiefer / höher'],
+      [white.map(label), 'Weiße Klaviertasten'],
+      [black.map(label), 'Schwarze Klaviertasten'],
+    ];
+    $('shortcuts-list').replaceChildren(
+      ...rows.flatMap(([keys, text]) => {
+        const dt = document.createElement('dt');
+        for (const part of keys) {
+          const kbd = document.createElement('kbd');
+          kbd.textContent = part;
+          dt.append(kbd, ' ');
+        }
+        const dd = document.createElement('dd');
+        dd.textContent = text;
+        return [dt, dd];
+      }),
+    );
+    $<HTMLDialogElement>('shortcuts-dialog').showModal();
   }
 
   // --- Rendering ---------------------------------------------------------

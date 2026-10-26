@@ -266,6 +266,7 @@ body::before {
 }
 .feedback.correct { color: var(--emerald); animation: settle 320ms ease-out; }
 .feedback.wrong { color: var(--bordeaux); animation: settle 320ms ease-out; }
+.feedback.skipped { color: #6b5a36; animation: settle 320ms ease-out; }
 
 .feedback-detail {
   margin: 2px 0 0;
@@ -405,6 +406,22 @@ button.close:hover { background: none; color: #2a2620; }
   max-height: calc(100vh - 40px);
   padding: 22px clamp(16px, 4vw, 40px) 26px;
   overflow-y: auto;
+}
+.shortcuts-dialog { width: min(560px, calc(100vw - 24px)); }
+.shortcuts-intro { margin: 0 0 12px; font-size: 0.92rem; color: #5b5040; }
+.shortcuts-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 18px;
+  margin: 0;
+  align-items: baseline;
+}
+.shortcuts-list dt { text-align: right; }
+.shortcuts-list dd { margin: 0; color: #2a2620; }
+.shortcuts-list kbd { opacity: 1; margin: 2px 1px; display: inline-block; color: #3d3220; background: rgba(201, 169, 106, 0.18); }
+@media (max-width: 600px) {
+  .shortcuts-list { grid-template-columns: 1fr; gap: 2px; }
+  .shortcuts-list dt { text-align: left; white-space: normal; margin-top: 8px; }
 }
 .lesson-dialog::backdrop { background: rgba(5, 5, 6, 0.72); backdrop-filter: blur(2px); }
 .lesson-head { position: sticky; top: -22px; background: inherit; z-index: 1; padding-top: 6px; }

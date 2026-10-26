@@ -14,6 +14,9 @@ const KEY_OFFSETS: Readonly<Record<string, number>> = {
 export const OCTAVE_DOWN_CODE = 'KeyZ';
 export const OCTAVE_UP_CODE = 'KeyX';
 
+/** All key codes the computer keyboard uses for playing (shortcuts must avoid them). */
+export const PIANO_CODES: readonly string[] = [...Object.keys(KEY_OFFSETS), OCTAVE_DOWN_CODE, OCTAVE_UP_CODE];
+
 /** Labels for a German QWERTZ layout, used when the browser can't tell us the layout. */
 const FALLBACK_LABELS: Readonly<Record<string, string>> = {
   KeyY: 'Z', KeyZ: 'Y', Semicolon: 'Ö', Quote: 'Ä',
@@ -92,7 +95,7 @@ export class ComputerKeyboardInput {
   }
 
   private onKeyDown = (e: KeyboardEvent): void => {
-    // Shift is reserved for shortcuts (⇧H tip, ⇧L lesson).
+    // Combinations with Shift never play (e.g. "?" for the shortcut overview).
     if (!this.enabled || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || isEditable(e.target)) return;
     if (e.code === OCTAVE_DOWN_CODE || e.code === OCTAVE_UP_CODE) {
       e.preventDefault();
