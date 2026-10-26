@@ -21,6 +21,10 @@ export class OnScreenKeyboard {
   private low = 60;
   private high = 83;
   private labels: KeyboardLabels = { noteNames: false, computerKeys: null };
+  private selecting = false;
+  /** Selected keys in selection mode, in click order. */
+  private selected: number[] = [];
+  private selectionListeners = new Set<(selected: readonly number[]) => void>();
 
   constructor(container: HTMLElement, private hub: InputHub) {
     this.root = document.createElement('div');
@@ -54,6 +58,56 @@ export class OnScreenKeyboard {
     this.low = low;
     this.high = high;
     this.build();
+  }
+
+  /**
+   * Selection mode for tasks with several notes: clicks toggle keys instead of
+   * playing them; `confirmSelection` then plays them all at once.
+   */
+  setSelectionMode(on: boolean): void {
+    if (on === this.selecting) return;
+    this.selecting = on;
+    this.root.classList.toggle('selecting', on);
+    this.clearSelection();
+  }
+
+  isSelecting(): boolean {
+    return this.selecting;
+  }
+
+  clearSelection(): void {
+    for (const midi of this.selected) this.keys.get(midi)?.classList.remove('selected');
+    this.selected = [];
+    this.notifySelection();
+  }
+
+  onSelectionChange(listener: (selected: readonly number[]) => void): void {
+    this.selectionListeners.add(listener);
+  }
+
+  /**
+   * Plays the selected keys in click order and releases them. For melodic tasks the
+   * order matters; for chords all notes arrive at the same moment.
+   */
+  confirmSelection(): void {
+    if (this.selected.length === 0) return;
+    const notes = [...this.selected];
+    this.clearSelection();
+    const time = performance.now();
+    for (const midi of notes) this.hub.emit({ type: 'on', midi, velocity: 100, time, source: 'screen' });
+    for (const midi of notes) this.hub.emit({ type: 'off', midi, velocity: 0, time, source: 'screen' });
+  }
+
+  private toggleSelected(midi: number): void {
+    const index = this.selected.indexOf(midi);
+    if (index >= 0) this.selected.splice(index, 1);
+    else this.selected.push(midi);
+    this.keys.get(midi)?.classList.toggle('selected', index < 0);
+    this.notifySelection();
+  }
+
+  private notifySelection(): void {
+    this.selectionListeners.forEach((l) => l(this.selected));
   }
 
   setLabels(labels: KeyboardLabels): void {
@@ -90,6 +144,8 @@ export class OnScreenKeyboard {
   private build(): void {
     this.root.replaceChildren();
     this.keys.clear();
+    this.selected = [];
+    this.notifySelection();
     const whiteCount = countWhite(this.low, this.high);
     const whiteWidth = 100 / whiteCount;
     this.root.style.minWidth = `${whiteCount * MIN_WHITE_KEY_PX}px`;
@@ -154,6 +210,10 @@ export class OnScreenKeyboard {
     const midi = this.keyFromEvent(e);
     if (midi === null) return;
     e.preventDefault();
+    if (this.selecting) {
+      this.toggleSelected(midi);
+      return;
+    }
     // Allow sliding across keys on touch screens.
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
     this.press(e.pointerId, midi, e.timeStamp || performance.now());

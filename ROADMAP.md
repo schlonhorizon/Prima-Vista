@@ -16,7 +16,7 @@ Klaviersystem/Violin-/Bassschlüssel, Tonumfang-Presets und Lagen-Gewichtung.
 | ---- | ---------------------------------- | ------------- |
 | –    | Einzelnoten, Klaviersystem, Design | fertig        |
 | 1    | Musiktheorie-Kern                  | fertig        |
-| 2    | Intervalle                         | geplant       |
+| 2    | Intervalle                         | fertig        |
 | 3    | Akkorde                            | geplant       |
 | 4    | Tonart erkennen                    | geplant       |
 | 5    | Rhythmus (Timing-, Audio-Engine)   | geplant       |
@@ -139,7 +139,7 @@ erscheinen dezent ausgegraut.
 - Unit-Tests für alle Tonarten (sieben verschiedene Buchstaben, Übereinstimmung mit der
   Vorzeichnung, Eis/His in Cis-Dur, Fes/Ces in Ces-Dur, Doppelkreuze in dis- und ais-Moll).
 
-## Teil 2: Intervalle
+## Teil 2: Intervalle ✔
 
 Abhängig von: 1.
 - Melodisch (nacheinander), harmonisch (übereinander) oder gemischt.

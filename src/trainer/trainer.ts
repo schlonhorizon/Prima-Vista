@@ -1,5 +1,6 @@
-import { StepMatcher } from '../exercises/matcher';
-import type { Exercise, Task } from '../exercises/types';
+import { StepMatcher, type StepResult } from '../exercises/matcher';
+import { taskPitches, type Exercise, type Task } from '../exercises/types';
+import { toMidi } from '../core/pitch';
 import type { InputHub } from '../input/inputHub';
 import type { NoteEvent } from '../input/types';
 import type { StatsStore } from '../stats/statsStore';
@@ -9,10 +10,15 @@ export interface TaskResult {
   readonly correct: boolean;
   /** Reaction time in ms, null if implausibly long (user was away). */
   readonly reactionMs: number | null;
-  /** MIDI notes of the wrong answer (empty if correct). */
+  /** Wrong answers: what was played, what was missing, what was too much (MIDI). */
   readonly played: readonly number[];
-  /** Expected MIDI notes of the step that was answered. */
+  readonly missing: readonly number[];
+  readonly extra: readonly number[];
+  readonly timeout: boolean;
+  /** All MIDI notes of the task (for highlighting the solution). */
   readonly expected: readonly number[];
+  /** Text of a choice answer, e.g. "D-Dur / h-Moll". */
+  readonly answerText?: string;
 }
 
 export interface TrainerCallbacks {
@@ -29,11 +35,11 @@ export interface TrainerTiming {
   maxReactionMs: number;
 }
 
-const DEFAULT_TIMING: TrainerTiming = { afterCorrectMs: 450, afterWrongMs: 1800, maxReactionMs: 20000 };
+const DEFAULT_TIMING: TrainerTiming = { afterCorrectMs: 650, afterWrongMs: 2400, maxReactionMs: 20000 };
 
 /**
- * Runs the practice loop: shows a task, matches input against it step by step,
- * records the result and moves on.
+ * Runs the practice loop: shows a task, matches input against it step by step
+ * (or receives a choice answer), records the result and moves on.
  */
 export class Trainer {
   private task: Task | null = null;
@@ -42,6 +48,7 @@ export class Trainer {
   private startedAt = 0;
   private waiting = false;
   private nextTimer: number | undefined;
+  private windowTimer: number | undefined;
   private timing: TrainerTiming;
 
   constructor(
@@ -59,45 +66,97 @@ export class Trainer {
     return this.task;
   }
 
+  isWaiting(): boolean {
+    return this.waiting;
+  }
+
+  setExercise(exercise: Exercise): void {
+    this.exercise = exercise;
+    this.next();
+  }
+
   /** Shows a new task immediately (also used after settings changes). */
   next(): void {
     window.clearTimeout(this.nextTimer);
+    window.clearTimeout(this.windowTimer);
     this.task = this.exercise.nextTask();
     this.stepIndex = 0;
-    this.matcher = new StepMatcher(this.task.steps[0]);
+    this.matcher = this.task.steps.length > 0 ? this.newMatcher() : null;
     this.waiting = false;
     this.callbacks.onTask(this.task);
     this.startedAt = performance.now();
-    // Start timing when the note is actually on screen.
+    // Start timing when the task is actually on screen.
     requestAnimationFrame(() => {
       this.startedAt = performance.now();
     });
   }
 
+  /** Answer for choice tasks (e.g. key recognition). */
+  answerChoice(correct: boolean, answerText: string): void {
+    if (!this.task || this.task.answer !== 'choice' || this.waiting) return;
+    this.finish(correct, performance.now(), { played: [], missing: [], extra: [], timeout: false, answerText });
+  }
+
+  private newMatcher(): StepMatcher {
+    return new StepMatcher(this.task!.steps[this.stepIndex], this.task!.chordWindowMs ?? 0);
+  }
+
   private onNote = (event: NoteEvent): void => {
-    if (!this.task || !this.matcher || this.waiting) return;
-    const result = this.matcher.handle(event);
-    if (result.status === 'pending') return;
-    if (result.status === 'correct' && this.stepIndex < this.task.steps.length - 1) {
-      this.stepIndex++;
-      this.matcher = new StepMatcher(this.task.steps[this.stepIndex]);
-      return;
-    }
-    this.finish(result.status === 'correct', result.status === 'wrong' ? result.played : [], result.time);
+    if (!this.task || this.task.answer !== 'play' || !this.matcher || this.waiting) return;
+    this.handleResult(this.matcher.handle(event));
   };
 
-  private finish(correct: boolean, played: number[], eventTime: number): void {
+  private handleResult(result: StepResult): void {
+    window.clearTimeout(this.windowTimer);
+    if (result.status === 'pending') {
+      const deadline = this.matcher!.deadline();
+      if (deadline !== null) {
+        const matcher = this.matcher!;
+        this.windowTimer = window.setTimeout(() => {
+          if (this.matcher === matcher && !this.waiting) this.handleResult(matcher.expire(performance.now()));
+        }, Math.max(0, deadline - performance.now()));
+      }
+      return;
+    }
+    if (result.status === 'correct' && this.stepIndex < this.task!.steps.length - 1) {
+      this.stepIndex++;
+      this.matcher = this.newMatcher();
+      return;
+    }
+    if (result.status === 'correct') {
+      this.finish(true, result.time, { played: [], missing: [], extra: [], timeout: false });
+    } else {
+      this.finish(false, result.time, {
+        played: result.played,
+        missing: result.missing,
+        extra: result.extra,
+        timeout: result.reason === 'timeout',
+      });
+    }
+  }
+
+  private finish(
+    correct: boolean,
+    eventTime: number,
+    details: Pick<TaskResult, 'played' | 'missing' | 'extra' | 'timeout' | 'answerText'>,
+  ): void {
     const task = this.task!;
     const now = performance.now();
     // Guard against event timestamps from a different time base.
     const time = eventTime >= this.startedAt - 1000 && eventTime <= now + 1000 ? eventTime : now;
     const elapsed = Math.max(0, time - this.startedAt);
     const reactionMs = elapsed <= this.timing.maxReactionMs ? Math.round(elapsed) : null;
-    const expected = this.matcher!.expectedMidi();
 
     this.waiting = true;
-    this.stats.record(task.itemKey, { ok: correct, ms: reactionMs, played });
-    this.callbacks.onResult({ task, correct, reactionMs, played, expected });
+    window.clearTimeout(this.windowTimer);
+    this.stats.record(task.itemKey, { ok: correct, ms: reactionMs, played: details.played });
+    this.callbacks.onResult({
+      task,
+      correct,
+      reactionMs,
+      expected: taskPitches(task).map(toMidi),
+      ...details,
+    });
     this.nextTimer = window.setTimeout(
       () => this.next(),
       correct ? this.timing.afterCorrectMs : this.timing.afterWrongMs,

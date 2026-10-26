@@ -1,9 +1,19 @@
 # Prima Vista
 
-Webapp zum Trainieren des Notenlesens am Klavier. Eine zufällige Note erscheint im
-Violinschlüssel, Bassschlüssel oder Klaviersystem, du spielst sie, die App zeigt richtig/falsch
-und misst die Reaktionszeit.
+Webapp zum Trainieren des Blattspiels am Klavier: sehen, verstehen, spielen. Die App zeigt eine
+Aufgabe im Violinschlüssel, Bassschlüssel oder Klaviersystem, du spielst sie, die App zeigt
+richtig/falsch und misst die Reaktionszeit.
 
+Modi:
+
+- **Einzelnoten:** zufällige Einzelnote, chromatisch, ohne Tonart.
+- **Intervalle:** melodisch, harmonisch oder gemischt; leitereigen in einer Tonart (mit
+  Vorzeichnung) oder chromatisch; Intervalle und Richtung wählbar.
+
+Für alle Modi:
+
+- **Tonart:** fest gewählt oder zufällig (bis n Vorzeichen, mit/ohne Moll, Wechsel alle n Aufgaben),
+  korrekte Vorzeichnung und enharmonisch korrekte Schreibweise.
 - **Klaviersystem:** Noten ab C4 im Violin-, darunter im Bassschlüssel. Bis zu 4 Hilfslinien
   werden normal notiert, weiter außen mit 8va/8vb (am oberen Rand des Klaviers 15ma).
 - **Tonumfang:** Preset „Nord Stage 4 (88 Tasten, A0–C8)“ oder manuell, je Notensystem getrennt
@@ -13,6 +23,8 @@ und misst die Reaktionszeit.
 
 Eingabe über MIDI-Keyboard (Web MIDI, z. B. Nord Stage 4 per USB), die Bildschirmtastatur
 oder die Computertastatur (A–K weiße Tasten, W E T Z U O P schwarze Tasten, Y/X Oktave).
+Mehrere gleichzeitig gedrückte Tasten zählen als Akkord. Auf der Bildschirmtastatur werden Töne
+mehrstimmiger Aufgaben ausgewählt und mit „Auswahl bestätigen“ oder der Leertaste gespielt.
 Fortschritt und Einstellungen liegen im `localStorage` des Browsers. Daten aus der Zeit, als
 die App noch „Notenleser“ hieß, werden beim ersten Start automatisch übernommen.
 
