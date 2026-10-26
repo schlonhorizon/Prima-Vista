@@ -12,14 +12,21 @@ Modi:
 - **Akkorde:** Stufenakkorde der Tonart als Dreiklänge und/oder Septakkorde, Grundstellung und
   Umkehrungen einzeln wählbar; danach Symbol, Stufe, Funktion und Lage („Am, vi, Tp,
   1. Umkehrung“), bei Fehlern fehlende und überzählige Töne.
+- **Rhythmus:** 1–4 Takte zum Metronom tippen (Klaviertaste, Leertaste oder Tippfläche), vier
+  Stufen bis zu Triolen und Sechzehnteln; Auswertung pro Note (auf den Punkt, zu früh, zu spät)
+  mit einstellbarer Toleranz, Metronom hörbar und als pulsierender Punkt, Kalibrierung der
+  Eingabeverzögerung.
 - **Tonarten:** Vorzeichnung erkennen, Dur- und parallele Moll-Tonart per Button wählen;
   Quintenzirkel als ausblendbare Hilfe, der nach der Antwort die Lösung hervorhebt.
 
 Für alle Modi:
 
-- **Wissensebene:** auf Wunsch ein **Tipp** während der Aufgabe (H bzw. ⇧H), **Mehr erfahren**
-  nach der Antwort (I) und eine **Lektion** pro Modus (L bzw. ⇧L). Versuche mit Tipp zählen in der
-  Statistik als „mit Hilfe“. Alle Texte stehen als Markdown in `src/content/` und lassen sich
+- **Wissensebene:** auf Wunsch ein **Tipp** während der Aufgabe (N), **Mehr erfahren** nach der
+  Antwort (M) und eine **Lektion** pro Modus (B). Versuche mit Tipp zählen in der Statistik als
+  „mit Hilfe“.
+- **Überspringen** (→): zeigt die Lösung und geht weiter; zählt in der Statistik als
+  „übersprungen“, nicht als Fehler. Alle Tastenkürzel zeigt **?** – keines liegt auf den
+  Klaviertasten der Computertastatur. Alle Texte stehen als Markdown in `src/content/` und lassen sich
   ohne Programmierkenntnisse korrigieren und erweitern (Aufbau siehe Kommentare in den Dateien).
 
 - **Tonart:** fest gewählt oder zufällig (bis n Vorzeichen, mit/ohne Moll, Wechsel alle n Aufgaben),
@@ -79,6 +86,9 @@ src/
                Hilfslinien, Oktavierung), Tonumfang, Presets, Lagen-Gewichtung, Storage
   input/       InputHub + Quellen: Web MIDI, Computertastatur
   theory/      Musiktheorie: Intervalle, Tonarten, Tonleiter-Katalog, Stufenakkorde, Benennungen
+  rhythm/      Rhythmus: Notenwerte, Muster-Katalog, Generator, Zählsilben, Auswertung
+  timing/      Timing-Engine: Transport, Metronom, Latenz-Kalibrierung
+  audio/       Audio-Engine (Web Audio, synthetisch)
   knowledge/   Wissensebene: Tipps, Erklärungen, Lektionen, Markdown-Darstellung
   content/     Texte der Wissensebene (Markdown): lessons/ und knowledge/
   exercises/   Aufgabenmodell (Task/Step), Generator „Einzelnoten“, Matcher, Auswahl

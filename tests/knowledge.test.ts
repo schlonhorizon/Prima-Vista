@@ -1,17 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { parsePitchId } from '../src/core/pitch';
+import { barBeats, parseRhythm } from '../src/rhythm/events';
 import { memoryStorage } from '../src/core/storage';
 import { ChordExercise } from '../src/exercises/chords';
 import { IntervalExercise } from '../src/exercises/intervals';
 import { KeyContext } from '../src/exercises/keyContext';
 import { KeyQuizExercise } from '../src/exercises/keyQuiz';
+import { RhythmExercise } from '../src/exercises/rhythm';
 import { WeightedSelector } from '../src/exercises/selection';
 import { SingleNoteExercise } from '../src/exercises/singleNote';
 import type { Exercise, Task } from '../src/exercises/types';
 import { contentFile, contentPaths, section } from '../src/knowledge/content';
 import { accidentalText, nearestLandmark, staffPosition } from '../src/knowledge/facts';
 import { documentTitle, fill, parseNotation, parseSections, placeholders, renderMarkdown } from '../src/knowledge/markdown';
-import { chordKnowledge, intervalKnowledge, KNOWLEDGE, keyKnowledge, noteKnowledge } from '../src/knowledge/providers';
+import {
+  chordKnowledge,
+  intervalKnowledge,
+  KNOWLEDGE,
+  keyKnowledge,
+  noteKnowledge,
+  rhythmKnowledge,
+  rhythmOutcomes,
+} from '../src/knowledge/providers';
+import { evaluateRhythm } from '../src/rhythm/evaluate';
 import { defaultSettings } from '../src/settings';
 import { StatsStore } from '../src/stats/statsStore';
 import { parseKeyId } from '../src/theory/key';
@@ -49,6 +60,7 @@ function allExercises(): Exercise[] {
       () => [],
     ),
     new KeyQuizExercise(() => ({ staff: 'grand', settings: { maxAccidentals: 7, showCircle: true } }), sel()),
+    new RhythmExercise(() => ({ ...d.rhythm, level: 4, bars: 4 }), new WeightedSelector({ random: seeded(5), avoidRepeat: false })),
   ];
 }
 
@@ -74,7 +86,7 @@ describe('markdown', () => {
     const html = renderMarkdown('```noten\nsystem: bass\ntonart: D-major\nnoten: C3 E3+G3\ntext: Beispiel\n```');
     expect(html).toContain('class="notation-example"');
     expect(parseNotation('system: grand\nnoten: C4+E4 G4')).toEqual({
-      system: 'grand', key: null, steps: [['C4', 'E4'], ['G4']], caption: '',
+      system: 'grand', key: null, steps: [['C4', 'E4'], ['G4']], rhythm: null, caption: '',
     });
   });
 });
@@ -92,6 +104,9 @@ describe('content files', () => {
       for (const b of blocks) {
         if (b.key) expect(parseKeyId(b.key), `${path}: ${b.key}`).not.toBeNull();
         for (const id of b.steps.flat()) expect(parsePitchId(id), `${path}: ${id}`).not.toBeNull();
+        if (b.rhythm) {
+          for (const bar of parseRhythm(b.rhythm)) expect(barBeats(bar), `${path}: ${b.rhythm}`).toBe(4);
+        }
       }
     }
   });
@@ -180,6 +195,19 @@ describe('knowledge providers', () => {
     expect(accidentalText(p('Bb4'))).toContain('erniedrigt H um einen Halbton zu **B**');
     const t = allExercises()[0].nextTask();
     expect(noteKnowledge.explain({ ...t, layout: 'treble', info: { kind: 'note', pitch: p('C8') } })).toContain('8va');
+  });
+});
+
+describe('rhythm knowledge', () => {
+  it('explains the performance with tendency', () => {
+    const exercise = allExercises()[5];
+    const task = exercise.nextTask();
+    const expected = [0, 500, 1000];
+    rhythmOutcomes.set(task, evaluateRhythm(expected, [-40, 460, 950], 30, 250));
+    const text = rhythmKnowledge.explain(task)!;
+    expect(text).toContain('0 von 3 Noten auf den Punkt – 3 zu früh');
+    expect(text).toContain('43 ms zu früh');
+    expect(text).toContain('**So wird gezählt:**');
   });
 });
 

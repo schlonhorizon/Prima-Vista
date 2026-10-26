@@ -4,6 +4,7 @@ import type { StatsGroup } from '../stats/statsView';
 import type { DiatonicChord } from '../theory/chords';
 import type { Interval } from '../theory/interval';
 import type { Key } from '../theory/key';
+import type { RhythmPattern } from '../rhythm/generator';
 
 /** What a task is about, in music theory terms – used by tips, explanations and lessons. */
 export type TaskInfo =
@@ -18,7 +19,8 @@ export type TaskInfo =
       readonly presentation: 'up' | 'down' | 'harm';
     }
   | { readonly kind: 'chord'; readonly chord: DiatonicChord; readonly inversion: number; readonly pitches: readonly Pitch[] }
-  | { readonly kind: 'keysig'; readonly fifths: number };
+  | { readonly kind: 'keysig'; readonly fifths: number }
+  | { readonly kind: 'rhythm'; readonly pattern: RhythmPattern; readonly bars: number; readonly bpm: number };
 
 /**
  * One thing the player has to do. Every exercise type maps onto this shape:
@@ -39,8 +41,11 @@ export interface Task {
   /** Key whose signature is shown; null = no key (no signature). */
   readonly key: Key | null;
   readonly steps: readonly TaskStep[];
-  /** "play" = answered on the piano, "choice" = answered with buttons. */
-  readonly answer: 'play' | 'choice';
+  /**
+   * "play" = answered on the piano (pitch), "choice" = answered with buttons,
+   * "perform" = performed in time (rhythm), evaluated by the timed exercise UI.
+   */
+  readonly answer: 'play' | 'choice' | 'perform';
   /** Statistics key for this item, e.g. "note|treble|C4". */
   readonly itemKey: string;
   /** Human-readable solution, e.g. "C4" or "große Terz aufwärts". */
@@ -51,6 +56,11 @@ export interface Task {
   readonly message?: string;
   /** Theory data for the knowledge layer. */
   readonly info?: TaskInfo;
+  /**
+   * Statistics keys a skip is recorded under; defaults to [itemKey]. Tasks made of
+   * several elements (e.g. a rhythm of several patterns) list all of them.
+   */
+  readonly statsKeys?: readonly string[];
   /** All notes of a step must be struck within this window (ms); 0 = no limit. */
   readonly chordWindowMs?: number;
 }

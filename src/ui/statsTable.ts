@@ -6,6 +6,7 @@ interface Totals {
   misses: number;
   assistedHits: number;
   assistedMisses: number;
+  skipped: number;
   timeSum: number;
   timeCount: number;
 }
@@ -15,7 +16,8 @@ const WEAK_MIN_ATTEMPTS = 3;
 
 /**
  * Statistics as collapsible groups; the groups come from the active exercise.
- * Rate and average time only count answers without help; "Mit Hilfe" lists the rest.
+ * Rate and average time only count answers without help; "Mit Hilfe" and
+ * "Übersprungen" are listed separately and never count as mistakes.
  */
 export class StatsTable {
   private openGroups = new Set<string>();
@@ -27,7 +29,7 @@ export class StatsTable {
   }
 
   private totals(keys: readonly string[]): Totals {
-    const t: Totals = { hits: 0, misses: 0, assistedHits: 0, assistedMisses: 0, timeSum: 0, timeCount: 0 };
+    const t: Totals = { hits: 0, misses: 0, assistedHits: 0, assistedMisses: 0, skipped: 0, timeSum: 0, timeCount: 0 };
     for (const key of keys) {
       const item = this.stats.getItem(key);
       if (!item) continue;
@@ -35,6 +37,7 @@ export class StatsTable {
       t.misses += item.misses;
       t.assistedHits += item.assistedHits ?? 0;
       t.assistedMisses += item.assistedMisses ?? 0;
+      t.skipped += item.skipped ?? 0;
       t.timeSum += item.hitTimeSum;
       t.timeCount += item.hitTimeCount;
     }
@@ -62,6 +65,7 @@ export class StatsTable {
     const parts: string[] = [];
     if (total > 0) parts.push(`${sum.hits} ✓ · ${sum.misses} ✗ · ${percent(sum.hits / total)} · Ø ${formatAvg(sum)}`);
     if (assisted > 0) parts.push(`${assisted} mit Hilfe`);
+    if (sum.skipped > 0) parts.push(`${sum.skipped} übersprungen`);
     if (weakCount > 0) parts.push(`${weakCount} schwach`);
     summary.querySelector('.octave-figures')!.textContent = parts.length > 0 ? parts.join(' · ') : 'noch nicht geübt';
     summary.classList.toggle('weak', weakCount > 0);
@@ -70,7 +74,7 @@ export class StatsTable {
     const table = document.createElement('table');
     table.className = 'stats-table';
     const head = document.createElement('tr');
-    for (const [i, title] of [...group.columns, 'Richtig', 'Falsch', 'Quote', 'Ø Zeit', 'Mit Hilfe'].entries()) {
+    for (const [i, title] of [...group.columns, 'Richtig', 'Falsch', 'Quote', group.timeLabel ?? 'Ø Zeit', 'Mit Hilfe', 'Übersprungen'].entries()) {
       const th = document.createElement('th');
       th.textContent = title;
       if (i < group.columns.length) th.className = 'text';
@@ -100,6 +104,7 @@ export class StatsTable {
       attempts > 0 ? percent(t.hits / attempts) : '–',
       formatAvg(t),
       t.assistedHits + t.assistedMisses > 0 ? `${t.assistedHits} ✓ ${t.assistedMisses} ✗` : '–',
+      t.skipped > 0 ? String(t.skipped) : '–',
     ];
     const tr = document.createElement('tr');
     cells.forEach((text, i) => {

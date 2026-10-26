@@ -5,6 +5,7 @@ import { RANGE_PRESETS } from '../core/presets';
 import { naturalsBetween } from '../core/range';
 import { STANDARD_INTERVAL_NAMES } from '../exercises/intervals';
 import type { PracticeModeId } from '../modes';
+import { RHYTHM_LEVELS } from '../rhythm/cells';
 import {
   MANUAL_RANGE,
   RANDOM_KEY,
@@ -70,6 +71,14 @@ export class SettingsForm {
     this.setChecked('intervalAllowed', s.intervals.allowed);
     this.select('quizMaxAccidentals').value = String(s.keyQuiz.maxAccidentals);
     this.input('showCircle').checked = s.keyQuiz.showCircle;
+    this.select('rhythmLevel').value = String(s.rhythm.level);
+    this.select('rhythmBars').value = String(s.rhythm.bars);
+    this.input('rhythmBpm').value = String(s.rhythm.bpm);
+    this.input('rhythmTolerance').value = String(s.rhythm.toleranceMs);
+    this.select('rhythmCountIn').value = String(s.rhythm.countIn);
+    this.input('rhythmLatency').value = String(s.rhythm.latencyMs);
+    this.input('rhythmSound').checked = s.rhythm.sound;
+    this.input('rhythmVolume').value = String(s.rhythm.volume);
     this.select('chordKinds').value = s.chords.kinds;
     this.setChecked('chordInversion', s.chords.inversions.map(String));
     this.setChecked('chordDegree', s.chords.degrees.map(String));
@@ -125,6 +134,16 @@ export class SettingsForm {
     }
     const allowed = this.checked('intervalAllowed') as StandardInterval[];
     if (allowed.length === 0) return this.showError('Bitte mindestens ein Intervall auswählen.');
+    const bpm = Number(this.input('rhythmBpm').value);
+    if (!Number.isInteger(bpm) || bpm < 30 || bpm > 240) return this.showError('Das Tempo muss zwischen 30 und 240 liegen.');
+    const tolerance = Number(this.input('rhythmTolerance').value);
+    if (!Number.isInteger(tolerance) || tolerance < 10 || tolerance > 300) {
+      return this.showError('Die Toleranz muss zwischen 10 und 300 ms liegen.');
+    }
+    const latency = Number(this.input('rhythmLatency').value);
+    if (!Number.isInteger(latency) || latency < -500 || latency > 500) {
+      return this.showError('Der Eingabe-Versatz muss zwischen −500 und 500 ms liegen.');
+    }
     const inversions = this.checked('chordInversion').map(Number);
     if (inversions.length === 0) return this.showError('Bitte mindestens eine Lage (Grundstellung/Umkehrung) auswählen.');
     const degrees = this.checked('chordDegree').map(Number);
@@ -148,6 +167,16 @@ export class SettingsForm {
         allowed,
       },
       chords: { kinds: this.select('chordKinds').value as ChordSettings['kinds'], inversions, degrees },
+      rhythm: {
+        level: Number(this.select('rhythmLevel').value),
+        bars: Number(this.select('rhythmBars').value),
+        bpm,
+        toleranceMs: tolerance,
+        countIn: Number(this.select('rhythmCountIn').value),
+        latencyMs: latency,
+        sound: this.input('rhythmSound').checked,
+        volume: Number(this.input('rhythmVolume').value),
+      },
       keyQuiz: {
         maxAccidentals: Number(this.select('quizMaxAccidentals').value),
         showCircle: this.input('showCircle').checked,
@@ -187,6 +216,9 @@ export class SettingsForm {
         ...Array.from({ length: 8 }, (_, n) => new Option(n === 0 ? 'ohne Vorzeichen' : `${n} Vorzeichen`, String(n))),
       );
     }
+    this.select('rhythmLevel').replaceChildren(
+      ...[1, 2, 3, 4].map((l) => new Option(`${l}: ${RHYTHM_LEVELS[l]}`, String(l))),
+    );
     this.fillChecks('#interval-checks', 'intervalAllowed', STANDARD_INTERVALS.map((id) => [id, STANDARD_INTERVAL_NAMES[id]]));
     this.fillChecks('#inversion-checks', 'chordInversion', [0, 1, 2, 3].map((i) => [String(i), inversionName(i)]));
     this.fillChecks('#degree-checks', 'chordDegree', DEGREE_NAMES.map((name, i) => [String(i + 1), `${name}. Stufe`]));

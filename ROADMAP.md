@@ -20,7 +20,7 @@ Klaviersystem/Violin-/Bassschlüssel, Tonumfang-Presets und Lagen-Gewichtung.
 | 2    | Intervalle                         | fertig        |
 | 3    | Akkorde                            | fertig        |
 | 4    | Tonart erkennen                    | fertig        |
-| 5    | Rhythmus (Timing-, Audio-Engine)   | geplant       |
+| 5    | Rhythmus (Timing-, Audio-Engine)   | fertig        |
 | 6    | Adaptive Logik                     | geplant       |
 | 7    | Abfolgen (Progressionen, Phrasen)  | geplant       |
 | 8    | Vorauslesen, beide Hände           | geplant       |
@@ -73,8 +73,9 @@ src/
   content/     Alle Texte der Wissensebene als Markdown – getrennt vom Code
   modes.ts     Modus-Register (Name, Status, Übung, Einstellungen, Statistik-Ansicht)
   ui/          App-Shell, Modus-Navigation, Tastatur, Antwort-Panels, Statistik-Tabelle
-  timing/      (Teil 5) Timing-Engine mit Metronom
-  audio/       (Teil 5) Audio-Engine per Web Audio
+  rhythm/      Rhythmus: Notenwerte, Muster-Katalog, Generator, Zählsilben, Auswertung
+  timing/      Timing-Engine: Transport, Metronom, Latenz-Kalibrierung
+  audio/       Audio-Engine per Web Audio (synthetisch)
   passages/    (Teil 7+) Generator für Notenpassagen
 ```
 
@@ -97,7 +98,9 @@ erhöhte 7. Stufe.
 **Aufgabenmodell.** Eine `Task` hat ein Notensystem (Violin/Bass/Klaviersystem), optional eine
 Tonart (→ Vorzeichnung), eine Folge von `Steps` (jeder Step = gleichzeitig zu spielende Töne)
 und eine Antwortart: `play` (Klavier) oder `choice` (Auswahl per Klick/Tastatur, z. B. Tonart
-erkennen). Teil 5 ergänzt pro Step Einsatzzeit und Dauer; der Matcher wird dann zeitgesteuert.
+erkennen) oder `perform` (im Tempo ausgeführt, z. B. Rhythmus – ausgewertet von der jeweiligen
+Oberfläche mit der Timing-Engine, Ergebnis pro Übungselement an den Trainer). Abfolgen und Prima
+Vista bauen darauf auf: Steps mit Einsatzzeit (Schläge) auf einem `Transport`.
 
 **Mehrton-Prüfung.** Ein Step ist gelöst, wenn alle Töne gleichzeitig gehalten werden. Ein falscher
 Ton ist sofort ein Fehler. Optional ein Zeitfenster: alle Töne müssen innerhalb von n ms nach dem
@@ -127,20 +130,27 @@ erscheinen dezent ausgegraut.
 
 **Wissensebene (fester Bestandteil jedes Modus).** Musiktheorie wird vermittelt, ohne den
 Übungsfluss zu stören – alles ist ausgeblendet, bis man es anfordert:
-- **Tipp** (H, in Klavier-Modi ⇧H): Hinweis während der Aufgabe, der die Lösung nicht verrät.
+- **Tipp** (N): Hinweis während der Aufgabe, der die Lösung nicht verrät.
   Der Versuch zählt als „mit Hilfe“: eigene Zähler (`assistedHits/assistedMisses`), Markierung
   `help` in den letzten Versuchen, eigene Spalte in der Statistik; Quote und Ø-Zeit zählen nur
   Antworten ohne Hilfe.
-- **Mehr erfahren** (I): Erklärung zu genau dieser Aufgabe nach der Antwort. Während sie offen ist,
+- **Mehr erfahren** (M): Erklärung zu genau dieser Aufgabe nach der Antwort. Während sie offen ist,
   hält der Trainer an (weiter mit Enter, Button oder beliebiger Klaviertaste). Wird sie erst
   während der nächsten Aufgabe geöffnet, verfällt deren Reaktionszeit. Optional automatisch.
-- **Lektion** (L, in Klavier-Modi ⇧L): Einführung pro Modus – was man lernt, warum es fürs
+- **Lektion** (B): Einführung pro Modus – was man lernt, warum es fürs
   Blattspiel zählt, eine praktische Methode, Notenbeispiele (VexFlow) und ein Übungstipp.
 - **Inhalte** liegen als Markdown unter `src/content/`: `lessons/<modus>.md` und
   `knowledge/<modus>.md` mit `## id`-Abschnitten und `{platzhaltern}`, die ein Provider in
   `src/knowledge/` aus `Task.info` (den Theorie-Daten jeder Aufgabe) füllt. Notenbeispiele als
   ```` ```noten ````-Block. Tests prüfen, dass jeder Abschnitt existiert, jeder Platzhalter gefüllt
   wird, Tipps die Lösung nicht nennen und alle Notenbeispiele gültig sind.
+- **Überspringen** (→): zeigt die Lösung (mit „Mehr erfahren“) und geht weiter. Zählt weder als
+  Treffer noch als Fehler, sondern als eigene Kategorie (`skipped`, Markierung in den letzten
+  Versuchen, eigene Spalte in der Statistik) – die adaptive Logik kann es gesondert werten.
+- **Tastenkürzel** liegen nie auf Klaviertasten der Computertastatur (A–Ä, W–P, Y/X): Wissen auf
+  B N M (rechte untere Reihe), Ablauf auf → / Enter / Esc, Leertaste für Bestätigen bzw. Tippen,
+  Übersicht mit ?. Ein Test prüft die Konfliktfreiheit; neue Kürzel kommen ins zentrale Register
+  `ui/shortcuts.ts`.
 - **Pflicht für jeden neuen Teil:** Tipps, Erklärungen nach der Antwort und eine Lektion als
   Inhaltsdateien plus Provider; ohne sie gilt ein Teil nicht als fertig.
 
@@ -194,27 +204,39 @@ Abhängig von: 1.
 - Die Antwort-Buttons sind nach Buchstaben sortiert (C, Cis, Ces, D …), nicht im Quintenzirkel,
   damit die Antwort nicht durch Abzählen entsteht; die Antwort zählt nur, wenn Dur und Moll stimmen.
 
-## Teil 5: Rhythmus (geplant)
+## Teil 5: Rhythmus ✔
 
 Abhängig von: Aufgabenmodell; liefert **Timing-Engine** und **Audio-Engine**.
-- 1–4 Takte, gespielt auf beliebiger Taste zum Metronom; Genauigkeit pro Note (Abweichung in ms
-  und als Anteil eines Schlags), Gesamtwertung.
-- Stufen: Viertel/Halbe → Achtel/Pausen → Punktierungen/Synkopen → Triolen/Sechzehntel.
-- Tempo einstellbar, Einzähltakt.
+- 1–4 Takte im 4/4-Takt, gespielt zum Metronom auf einer beliebigen Klaviertaste (MIDI oder
+  Computertastatur), mit der Leertaste oder auf einer großen Tippfläche (Klick/Touch).
+- Stufen: Viertel/Halbe → Achtel/Pausen → Punktierungen/Synkopen → Triolen/Sechzehntel; die
+  Muster der gewählten Stufe kommen doppelt so oft.
+- Tempo, Takte, Einzählen (0–2 Takte), Toleranz (± ms) einstellbar; Metronom hörbar
+  (abschaltbar, Lautstärke) und immer optisch als pulsierender Messingpunkt mit Zählzeit.
+- Auswertung pro Note: auf den Punkt / zu früh / zu spät / ausgelassen, Abweichung in ms unter der
+  Note, zusätzliche Taps; Durchschnitt als Tendenz („du eilst / schleppst“).
+- Kalibrierung: 12-mal zum Klick tippen, der Median-Versatz wird von allen Taps abgezogen.
 
-Designentscheidungen:
-- **Audio-Engine:** Web Audio, rein synthetisch (Metronom-Klick als kurzer gefilterter Impuls,
-  Klavierton als additive Synthese mit Hüllkurve). Keine Samples von fremden Servern; falls später
-  Samples, dann im Repo gebündelt.
-- **Timing-Engine:** Master-Uhr ist `AudioContext.currentTime`; Look-ahead-Scheduler (z. B. 100 ms
-  voraus, Tick alle 25 ms). MIDI-Zeitstempel (performance.now) werden über
-  `getOutputTimestamp()` auf die Audio-Uhr umgerechnet. Latenz-Kalibrierung in den Einstellungen
-  (Tippen zum Klick).
-- Task-Steps erhalten `onset` und `duration` in Schlägen; Notation mit Takten, Balken, Pausen.
-- Statistik: Übungselement = Rhythmusmuster (z. B. `rhythm|dotted-quarter-eighth`), zusätzlich
-  mittlere Abweichung.
-- Wissen: Lektion zu Notenwerten, Takt und Zählen („1 und 2 und“), Tipp = Zählhilfe für das
-  Muster, Erklärung = Silben/Zählweise des gespielten Rhythmus mit Abweichungen.
+Designentscheidungen (gegenüber der ersten Planung angepasst):
+- **Uhr:** Master ist `performance.now()` – dieselbe Zeitbasis wie MIDI-, Tastatur- und
+  Zeigerereignisse. Der Metronom-Klick wird über `getOutputTimestamp()` auf die Audio-Uhr
+  umgerechnet und sample-genau geplant; ohne Ton läuft alles ohne AudioContext.
+- **Timing-Engine** (`timing/`): `Transport` (Tempo, Startzeit, Schlag ↔ Zeit), `Metronome`
+  (Look-ahead-Planung 120 ms, Tick 25 ms, Callbacks pro Schlag für die Optik),
+  `estimateLatency` (Kalibrierung). Wiederverwendbar für Abfolgen, Vorauslesen und Prima Vista.
+- **Audio-Engine** (`audio/`): Web Audio, synthetischer Klick (Akzent auf der 1), keine Dateien.
+- **Rhythmus-Modul** (`rhythm/`): Muster-Katalog (`cells`), Generator, Zählsilben
+  („1 und 2 und“, „1 e und e“, „1 tri ole“, stille Schläge in Klammern), Auswertung. Der
+  Rhythmus läuft nicht über den Tonhöhen-Matcher: Aufgaben haben die Antwortart `perform`, die
+  Rhythmus-Oberfläche wertet aus und meldet dem Trainer ein Ergebnis pro Muster.
+- **Notation:** eigener `RhythmRenderer` – eine Linie mit Schlagzeugschlüssel, 4/4, Balken pro
+  Schlag, Triolen, Punktierungen, Pausen; nach der Antwort farbig mit Abweichung pro Note.
+  Lektionen nutzen ihn über ```` ```noten ```` mit `rhythmus: q 8 8 qd 8 | …`.
+- **Statistik:** Übungselement = Muster (`rhythm|dotted-quarter-eighth`); „Ø Abweichung“ statt
+  Reaktionszeit; Überspringen zählt für alle Muster der Aufgabe.
+- Wissen: Lektion zu Notenwerten, Pausen, Punktierungen, Synkopen, Triolen und zum Zählen
+  („1 und 2 und“, Silbenhilfen); Tipp = Zählweise des Rhythmus; Erklärung = Zählweise, eigene
+  Ausführung mit Tendenz und eine kurze Beschreibung jedes Musters.
 
 ## Teil 6: Adaptive Logik (geplant)
 
@@ -225,6 +247,7 @@ Abhängig von: einheitliche Statistik (vorhanden). Wirkt auf alle Modi.
   - Langsamkeit (Reaktionszeit relativ zum Median aller Elemente des Modus),
   - Zeit seit „zuletzt geübt“ (wächst langsam bis zu einer Obergrenze),
   - Unbekannt-Bonus für nie geübte Elemente.
+  - Übersprungene Aufgaben zählen gesondert (z. B. wie ein halber Fehler, einstellbar).
   - Versuche „mit Hilfe“ (Tipp) zählen gesondert: ein Treffer mit Tipp senkt den Faktor weniger
     als ein Treffer ohne Hilfe (eigener, einstellbarer Anteil).
 - Parameter in den Einstellungen: Einfluss Fehler, Einfluss Langsamkeit, Erholungsrate

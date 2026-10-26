@@ -9,6 +9,13 @@
  *   text: Beschriftung        (optional caption)
  *   ```
  *
+ * Rhythm examples use `rhythmus:` instead of `noten:` – note values w h q 8 16,
+ * suffix d = dotted, r = rest, t = triplet eighth, bars separated by "|":
+ *
+ *   ```noten
+ *   rhythmus: q 8 8 qd 8 | h hr
+ *   ```
+ *
  * Content files may contain HTML comments for editors; they are removed.
  * All text is escaped – content files cannot inject HTML.
  */
@@ -18,6 +25,8 @@ export interface NotationSpec {
   key: string | null;
   /** Steps of pitch ids, e.g. [["C4"], ["E4", "G4"]] */
   steps: string[][];
+  /** Rhythm text (see parseRhythm) – shown on a percussion line instead of notes. */
+  rhythm: string | null;
   caption: string;
 }
 
@@ -68,7 +77,7 @@ function inline(text: string): string {
 }
 
 export function parseNotation(body: string): NotationSpec {
-  const spec: NotationSpec = { system: 'treble', key: null, steps: [], caption: '' };
+  const spec: NotationSpec = { system: 'treble', key: null, steps: [], rhythm: null, caption: '' };
   for (const line of body.split('\n')) {
     const m = /^\s*(\w+)\s*:\s*(.*?)\s*$/.exec(line);
     if (!m) continue;
@@ -76,6 +85,7 @@ export function parseNotation(body: string): NotationSpec {
     if (field === 'system' && (value === 'treble' || value === 'bass' || value === 'grand')) spec.system = value;
     else if (field === 'tonart') spec.key = value || null;
     else if (field === 'noten') spec.steps = value.split(/\s+/).filter(Boolean).map((step) => step.split('+'));
+    else if (field === 'rhythmus') spec.rhythm = value || null;
     else if (field === 'text') spec.caption = value;
   }
   return spec;

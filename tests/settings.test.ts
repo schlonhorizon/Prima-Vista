@@ -37,7 +37,7 @@ describe('settings', () => {
 
   it('validates key and interval settings', () => {
     const s = sanitize({
-      practice: 'rhythm',
+      practice: 'ear',
       key: { choice: 'D#-major', maxAccidentals: 9, includeMinor: false, changeEvery: 0 },
       intervals: { scope: 'key', allowed: ['P5', 'X9', 'm3'], direction: 'up', presentation: 'flute' },
     });

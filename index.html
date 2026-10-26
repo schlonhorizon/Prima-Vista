@@ -36,10 +36,12 @@
           <p id="feedback" class="feedback"></p>
           <p id="feedback-detail" class="feedback-detail"></p>
         </div>
-        <div class="knowledge-bar" role="toolbar" aria-label="Wissen">
-          <button type="button" class="quiet" id="tip-button">Tipp <kbd id="tip-key">H</kbd></button>
-          <button type="button" class="quiet" id="explain-button" disabled>Mehr erfahren <kbd>I</kbd></button>
-          <button type="button" class="quiet" id="lesson-button">Lektion <kbd id="lesson-key">L</kbd></button>
+        <div class="knowledge-bar" role="toolbar" aria-label="Wissen und Ablauf">
+          <button type="button" class="quiet" id="tip-button">Tipp <kbd data-shortcut="tip"></kbd></button>
+          <button type="button" class="quiet" id="explain-button" disabled>Mehr erfahren <kbd data-shortcut="explain"></kbd></button>
+          <button type="button" class="quiet" id="lesson-button">Lektion <kbd data-shortcut="lesson"></kbd></button>
+          <button type="button" class="quiet" id="skip-button">Überspringen <kbd data-shortcut="skip"></kbd></button>
+          <button type="button" class="quiet" id="shortcuts-button" aria-label="Tastenkürzel anzeigen">Tastenkürzel <kbd data-shortcut="help"></kbd></button>
         </div>
       </section>
 
@@ -51,7 +53,7 @@
         <div class="prose" id="knowledge-body"></div>
         <p class="knowledge-note" id="knowledge-note"></p>
         <footer class="knowledge-continue" id="knowledge-continue" hidden>
-          <button type="button" class="primary" id="continue-button">Weiter <kbd>Enter</kbd></button>
+          <button type="button" class="primary" id="continue-button">Weiter <kbd data-shortcut="next"></kbd></button>
           <span class="hint">oder eine beliebige Taste am Klavier</span>
         </footer>
       </section>
@@ -80,6 +82,19 @@
         <div class="metric"><span class="metric-value" id="m-last">–</span><span class="metric-label">Letzte</span></div>
       </section>
 
+      <section class="card rhythm-card" id="rhythm-card" hidden>
+        <div class="rhythm-head">
+          <span class="metronome-dot" id="metronome-dot" aria-hidden="true"></span>
+          <span class="rhythm-count" id="rhythm-count"></span>
+          <p class="rhythm-status" id="rhythm-status" aria-live="polite"></p>
+          <button type="button" id="calibrate-button">Eingabe kalibrieren</button>
+        </div>
+        <div class="rhythm-pad" id="rhythm-pad" role="button" aria-label="Tippfläche">
+          <span class="rhythm-pad-label">Hier tippen</span>
+          <span class="rhythm-pad-hint">oder Leertaste · beliebige Klaviertaste · MIDI</span>
+        </div>
+      </section>
+
       <section class="card keyboard-card" id="keyboard-card">
         <div class="keyboard-bar">
           <span class="eyebrow">Computertastatur · Oktave <strong id="pc-octave">4</strong></span>
@@ -99,7 +114,7 @@
       <details class="card panel">
         <summary>Einstellungen</summary>
         <form id="settings" class="settings">
-          <fieldset>
+          <fieldset data-modes="notes intervals chords keys">
             <legend>Notensystem und Tonumfang</legend>
             <label>
               Notensystem
@@ -182,6 +197,36 @@
             <label>Vorzeichnungen bis <select name="quizMaxAccidentals"></select></label>
             <label class="check"><input type="checkbox" name="showCircle" /> Quintenzirkel als Hilfe zeigen</label>
           </fieldset>
+          <fieldset data-modes="rhythm">
+            <legend>Rhythmus</legend>
+            <label>Stufe <select name="rhythmLevel"></select></label>
+            <label>
+              Takte
+              <select name="rhythmBars">
+                <option value="1">1 Takt</option>
+                <option value="2">2 Takte</option>
+                <option value="3">3 Takte</option>
+                <option value="4">4 Takte</option>
+              </select>
+            </label>
+            <label>Tempo (Schläge pro Minute) <input type="number" name="rhythmBpm" min="30" max="240" step="1" inputmode="numeric" /></label>
+            <label>Toleranz (± ms) <input type="number" name="rhythmTolerance" min="10" max="300" step="5" inputmode="numeric" /></label>
+            <label>
+              Einzählen
+              <select name="rhythmCountIn">
+                <option value="0">ohne</option>
+                <option value="1">1 Takt</option>
+                <option value="2">2 Takte</option>
+              </select>
+            </label>
+            <label>Eingabe-Versatz (ms) <input type="number" name="rhythmLatency" min="-500" max="500" step="1" inputmode="numeric" /></label>
+            <label class="check"><input type="checkbox" name="rhythmSound" /> Metronom hörbar</label>
+            <label>Lautstärke <input type="range" name="rhythmVolume" min="0" max="100" step="5" /></label>
+            <p class="hint full">
+              Der Messingpunkt zeigt den Schlag immer, auch ohne Ton. Den Eingabe-Versatz misst
+              „Eingabe kalibrieren“: ein paar Mal zum Klick tippen, der Wert wird von jedem Tipp abgezogen.
+            </p>
+          </fieldset>
           <fieldset data-modes="notes intervals chords">
             <legend>Lagen-Gewichtung</legend>
             <label>Kernzone ab <select name="coreLow"></select></label>
@@ -199,13 +244,13 @@
             <legend>Wissen</legend>
             <label class="check"><input type="checkbox" name="autoExplain" /> Erklärungen automatisch einblenden</label>
             <p class="hint full">
-              Tipp (H), Mehr erfahren (I) und Lektion (L) gibt es immer auf Wunsch. Solange die
-              Computertastatur als Klavier dient, gilt in Klavier-Modi ⇧H und ⇧L.
+              Tipp (N), Mehr erfahren (M) und Lektion (B) gibt es immer auf Wunsch; alle Tastenkürzel
+              zeigt <kbd>?</kbd>.
             </p>
           </fieldset>
           <fieldset>
             <legend>Eingabe und Anzeige</legend>
-            <label class="check" data-modes="notes intervals chords"><input type="checkbox" name="computerPiano" /> Computertastatur als Klavier</label>
+            <label class="check" data-modes="notes intervals chords rhythm"><input type="checkbox" name="computerPiano" /> Computertastatur als Klavier</label>
             <label class="check" data-modes="notes intervals chords"><input type="checkbox" name="showNoteNames" /> Notennamen auf den Tasten</label>
             <label class="check" data-modes="notes intervals chords"><input type="checkbox" name="showComputerKeys" /> Computertasten auf den Tasten</label>
             <label class="check" data-modes="intervals chords">
@@ -233,6 +278,18 @@
         <button type="button" class="close" id="lesson-close" aria-label="Lektion schließen">×</button>
       </header>
       <div class="prose" id="lesson-body"></div>
+    </dialog>
+
+    <dialog class="lesson-dialog shortcuts-dialog" id="shortcuts-dialog" aria-labelledby="shortcuts-title">
+      <header class="lesson-head">
+        <h2 id="shortcuts-title">Tastenkürzel</h2>
+        <button type="button" class="close" id="shortcuts-close" aria-label="Übersicht schließen">×</button>
+      </header>
+      <p class="shortcuts-intro">
+        Alle Kürzel liegen außerhalb der Klaviertasten der Computertastatur – du kannst spielen, ohne
+        versehentlich etwas auszulösen.
+      </p>
+      <dl class="shortcuts-list" id="shortcuts-list"></dl>
     </dialog>
 
     <script type="module" src="/src/main.ts"></script>

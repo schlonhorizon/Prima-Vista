@@ -62,6 +62,22 @@ export interface KeyQuizSettings {
   showCircle: boolean;
 }
 
+export interface RhythmSettings {
+  /** 1 Viertel/Halbe … 4 Triolen/Sechzehntel */
+  level: number;
+  bars: number;
+  bpm: number;
+  /** Deviation still counted as "on the point" (ms). */
+  toleranceMs: number;
+  /** Count-in bars (0–2). */
+  countIn: number;
+  sound: boolean;
+  /** 0–100 */
+  volume: number;
+  /** Measured input latency, subtracted from every tap (ms). */
+  latencyMs: number;
+}
+
 export interface Settings {
   practice: PracticeModeId;
   staff: StaffMode;
@@ -73,6 +89,7 @@ export interface Settings {
   intervals: IntervalSettings;
   chords: ChordSettings;
   keyQuiz: KeyQuizSettings;
+  rhythm: RhythmSettings;
   /** Show the explanation after every answer (and wait until the player continues). */
   autoExplain: boolean;
   /** Use the computer keyboard as piano (A–K …). Off frees H and L as plain shortcuts. */
@@ -108,6 +125,7 @@ export function defaultSettings(): Settings {
     },
     chords: { kinds: 'triads', inversions: [0, 1, 2, 3], degrees: [1, 2, 3, 4, 5, 6, 7] },
     keyQuiz: { maxAccidentals: 7, showCircle: true },
+    rhythm: { level: 1, bars: 2, bpm: 80, toleranceMs: 70, countIn: 1, sound: true, volume: 70, latencyMs: 0 },
     autoExplain: false,
     computerPiano: true,
     showNoteNames: false,
@@ -149,6 +167,7 @@ export function sanitize(raw: Record<string, unknown>): Settings {
     intervals: sanitizeIntervals(raw.intervals, d.intervals),
     chords: sanitizeChords(raw.chords, d.chords),
     keyQuiz: sanitizeKeyQuiz(raw.keyQuiz, d.keyQuiz),
+    rhythm: sanitizeRhythm(raw.rhythm, d.rhythm),
     autoExplain: bool(raw.autoExplain, d.autoExplain),
     computerPiano: bool(raw.computerPiano, d.computerPiano),
     showNoteNames: bool(raw.showNoteNames, d.showNoteNames),
@@ -240,6 +259,20 @@ function sanitizeKeyQuiz(raw: unknown, d: KeyQuizSettings): KeyQuizSettings {
   return {
     maxAccidentals: int(r.maxAccidentals, 0, MAX_FIFTHS, d.maxAccidentals),
     showCircle: bool(r.showCircle, d.showCircle),
+  };
+}
+
+function sanitizeRhythm(raw: unknown, d: RhythmSettings): RhythmSettings {
+  const r = (raw ?? {}) as Partial<RhythmSettings>;
+  return {
+    level: int(r.level, 1, 4, d.level),
+    bars: int(r.bars, 1, 4, d.bars),
+    bpm: int(r.bpm, 30, 240, d.bpm),
+    toleranceMs: int(r.toleranceMs, 10, 300, d.toleranceMs),
+    countIn: int(r.countIn, 0, 2, d.countIn),
+    sound: bool(r.sound, d.sound),
+    volume: int(r.volume, 0, 100, d.volume),
+    latencyMs: int(r.latencyMs, -500, 500, d.latencyMs),
   };
 }
 

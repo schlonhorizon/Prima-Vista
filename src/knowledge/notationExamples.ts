@@ -1,5 +1,7 @@
 import { parsePitchId, type Pitch } from '../core/pitch';
+import { RhythmRenderer } from '../render/rhythmRenderer';
 import { StaffRenderer } from '../render/staffRenderer';
+import { parseRhythm } from '../rhythm/events';
 import { parseKeyId } from '../theory/key';
 import type { NotationSpec } from './markdown';
 
@@ -22,6 +24,14 @@ export function renderNotationExamples(root: HTMLElement): void {
       const caption = document.createElement('figcaption');
       caption.textContent = spec.caption;
       figure.appendChild(caption);
+    }
+    if (spec.rhythm) {
+      try {
+        new RhythmRenderer(staff, { maxScale: 1.2 }).render(parseRhythm(spec.rhythm));
+      } catch {
+        staff.textContent = spec.rhythm;
+      }
+      return;
     }
     const key = spec.key ? parseKeyId(spec.key) : null;
     const baseWidth = 200 + Math.max(1, steps.length) * 42;
