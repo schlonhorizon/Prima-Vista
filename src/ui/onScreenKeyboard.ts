@@ -1,6 +1,10 @@
 import { germanName, isBlackKey, midiToPitch } from '../core/pitch';
 import type { InputHub } from '../input/inputHub';
 
+/** Above this many white keys the keyboard shows the exact range instead of whole octaves. */
+const MAX_WHITE_KEYS_ROUNDED = 36;
+const MIN_WHITE_KEY_PX = 18;
+
 export type KeyFlash = 'correct' | 'wrong' | 'hint';
 
 export interface KeyboardLabels {
@@ -35,10 +39,17 @@ export class OnScreenKeyboard {
     this.build();
   }
 
-  /** Shows whole octaves covering [lowMidi, highMidi]. */
+  /**
+   * Shows the keys covering [lowMidi, highMidi]: whole octaves for small ranges,
+   * otherwise exactly the range (starting and ending on white keys).
+   */
   setRange(lowMidi: number, highMidi: number): void {
-    const low = lowMidi - (((lowMidi % 12) + 12) % 12);
-    const high = highMidi + (11 - (((highMidi % 12) + 12) % 12));
+    let low = lowMidi - (((lowMidi % 12) + 12) % 12);
+    let high = highMidi + (11 - (((highMidi % 12) + 12) % 12));
+    if (countWhite(low, high) > MAX_WHITE_KEYS_ROUNDED) {
+      low = isBlackKey(lowMidi) ? lowMidi - 1 : lowMidi;
+      high = isBlackKey(highMidi) ? highMidi + 1 : highMidi;
+    }
     if (low === this.low && high === this.high) return;
     this.low = low;
     this.high = high;
@@ -53,6 +64,8 @@ export class OnScreenKeyboard {
   flash(midi: number, kind: KeyFlash, durationMs = 900): void {
     const key = this.keys.get(midi);
     if (!key) return;
+    // On narrow screens the keyboard scrolls horizontally; bring the key into view.
+    if (kind === 'hint') key.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
     const cls = `flash-${kind}`;
     key.classList.remove(cls);
     void key.offsetWidth; // restart animation
@@ -67,9 +80,10 @@ export class OnScreenKeyboard {
   private build(): void {
     this.root.replaceChildren();
     this.keys.clear();
-    let whiteCount = 0;
-    for (let m = this.low; m <= this.high; m++) if (!isBlackKey(m)) whiteCount++;
+    const whiteCount = countWhite(this.low, this.high);
     const whiteWidth = 100 / whiteCount;
+    this.root.style.minWidth = `${whiteCount * MIN_WHITE_KEY_PX}px`;
+    this.root.classList.toggle('compact', whiteCount > MAX_WHITE_KEYS_ROUNDED);
 
     let whiteIndex = 0;
     for (let midi = this.low; midi <= this.high; midi++) {
@@ -100,7 +114,10 @@ export class OnScreenKeyboard {
       const noteLabel = key.querySelector<HTMLElement>('.note-label')!;
       const pcLabel = key.querySelector<HTMLElement>('.pc-label')!;
       const p = midiToPitch(midi);
-      noteLabel.textContent = this.labels.noteNames && p.alter === 0 ? germanName(p) : '';
+      // With many keys only the Cs are labelled, otherwise the labels don't fit.
+      const compact = this.root.classList.contains('compact');
+      const show = this.labels.noteNames && p.alter === 0 && (!compact || p.step === 'C');
+      noteLabel.textContent = show ? germanName(p) : '';
       pcLabel.textContent = this.labels.computerKeys?.get(midi) ?? '';
     }
   }
@@ -146,4 +163,10 @@ export class OnScreenKeyboard {
   private onPointerUp = (e: PointerEvent): void => {
     this.release(e.pointerId, e.timeStamp || performance.now());
   };
+}
+
+function countWhite(low: number, high: number): number {
+  let count = 0;
+  for (let m = low; m <= high; m++) if (!isBlackKey(m)) count++;
+  return count;
 }

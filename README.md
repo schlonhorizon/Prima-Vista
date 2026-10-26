@@ -1,7 +1,15 @@
 # Notenleser
 
 Webapp zum Trainieren des Notenlesens am Klavier. Eine zufällige Note erscheint im
-Violinschlüssel, du spielst sie, die App zeigt richtig/falsch und misst die Reaktionszeit.
+Violinschlüssel, Bassschlüssel oder Klaviersystem, du spielst sie, die App zeigt richtig/falsch
+und misst die Reaktionszeit.
+
+- **Klaviersystem:** Noten ab C4 im Violin-, darunter im Bassschlüssel. Bis zu 4 Hilfslinien
+  werden normal notiert, weiter außen mit 8va/8vb (am oberen Rand des Klaviers 15ma).
+- **Tonumfang:** Preset „Nord Stage 4 (88 Tasten, A0–C8)“ oder manuell, je Notensystem getrennt
+  gespeichert und unabhängig vom angeschlossenen MIDI-Gerät.
+- **Lagen-Gewichtung:** Töne in der Kernzone (Standard C2–C6) kommen gleich oft dran, außerhalb
+  halbiert sich die Häufigkeit pro Oktave Abstand. Zone und Faktor sind einstellbar.
 
 Eingabe über MIDI-Keyboard (Web MIDI, z. B. Nord Stage 4 per USB), die Bildschirmtastatur
 oder die Computertastatur (A–K weiße Tasten, W E T Z U O P schwarze Tasten, Y/X Oktave).
@@ -40,21 +48,23 @@ Weitere Befehle:
 
 ```
 src/
-  core/        Tonhöhen (Pitch, MIDI, deutsche Namen), Schlüssel, Tonumfang, Storage
+  core/        Tonhöhen (Pitch, MIDI, deutsche Namen), Schlüssel, Notensatz (Staff-Zuordnung,
+               Hilfslinien, Oktavierung), Tonumfang, Presets, Lagen-Gewichtung, Storage
   input/       InputHub + Quellen: Web MIDI, Computertastatur
   exercises/   Aufgabenmodell (Task/Step), Generator „Einzelnoten“, Matcher, Auswahl
   stats/       Statistik pro Item (Treffer, Fehler, Zeiten, Verwechslungen)
-  render/      Notenzeile mit VexFlow
+  render/      Notenzeile bzw. Klaviersystem mit VexFlow
   trainer/     Übungsschleife: Aufgabe → Eingabe prüfen → speichern → nächste
-  ui/          App-Verdrahtung, Bildschirmtastatur
+  ui/          App-Verdrahtung, Bildschirmtastatur, Statistik nach Oktaven
 ```
 
 Vorbereitet für spätere Schritte:
 
-- **Bassschlüssel:** `CLEFS.bass` ist konfiguriert, Renderer und Statistik-Keys tragen den Schlüssel.
 - **Intervalle, Akkorde, Phrasen:** Eine `Task` besteht aus `steps`, jeder Step aus mehreren
   Tönen. Der `StepMatcher` prüft bereits gleichzeitig gehaltene Töne, der Trainer arbeitet
-  Steps der Reihe nach ab. Neue Übungen implementieren nur `Exercise.nextTask()`.
-- **Adaptive Gewichtung:** Übungen wählen über das Interface `ItemSelector`. Ein adaptiver
-  Selector kann `StatsStore.getItem()` lesen (Trefferquote, Ø-Zeit, letzte 50 Versuche,
-  zuletzt gesehen) und `UniformSelector` ersetzen.
+  Steps der Reihe nach ab, der Renderer verteilt die Töne eines Steps auf beide Systeme.
+  Neue Übungen implementieren nur `Exercise.nextTask()`.
+- **Adaptive Gewichtung:** Der `WeightedSelector` zieht proportional zu
+  `Grundgewicht × Modifikatoren`. Ein adaptiver Faktor wird als `WeightModifier` ergänzt, der
+  aus `StatsStore.getItem()` (Trefferquote, Ø-Zeit, letzte 50 Versuche, zuletzt gesehen) einen
+  Multiplikator berechnet.
