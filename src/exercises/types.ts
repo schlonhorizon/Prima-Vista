@@ -30,6 +30,8 @@ export interface Task {
   readonly label: string;
   /** Additional explanation shown after the answer. */
   readonly detail?: string;
+  /** Message shown instead of a task, e.g. when the settings leave nothing to practise. */
+  readonly message?: string;
   /** All notes of a step must be struck within this window (ms); 0 = no limit. */
   readonly chordWindowMs?: number;
 }

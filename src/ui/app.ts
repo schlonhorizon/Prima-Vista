@@ -2,6 +2,7 @@ import { germanName, midiToPitch, toMidi } from '../core/pitch';
 import type { KeyValueStorage } from '../core/storage';
 import { ChordExercise } from '../exercises/chords';
 import { IntervalExercise } from '../exercises/intervals';
+import { checkKeyAnswer, KeyQuizExercise } from '../exercises/keyQuiz';
 import { KeyContext } from '../exercises/keyContext';
 import { WeightedSelector } from '../exercises/selection';
 import { SingleNoteExercise } from '../exercises/singleNote';
@@ -13,8 +14,9 @@ import { MODES, type PracticeModeId } from '../modes';
 import { StaffRenderer } from '../render/staffRenderer';
 import { effectiveRange, loadSettings, saveSettings, type Settings } from '../settings';
 import { StatsStore } from '../stats/statsStore';
-import { germanKeyName } from '../theory/key';
+import { fifthsOf, germanKeyName } from '../theory/key';
 import { Trainer, type TaskResult } from '../trainer/trainer';
+import { KeyQuizPanel } from './keyQuizPanel';
 import { OnScreenKeyboard } from './onScreenKeyboard';
 import { SettingsForm } from './settingsForm';
 import { StatsTable } from './statsTable';
@@ -48,6 +50,7 @@ export class App {
   private exercises: Partial<Record<PracticeModeId, Exercise>>;
   private trainer: Trainer;
   private form!: SettingsForm;
+  private keyQuiz!: KeyQuizPanel;
   private session: SessionStats = { correct: 0, wrong: 0, timeSum: 0, timeCount: 0 };
 
   private feedbackEl = $('feedback');
@@ -87,6 +90,7 @@ export class App {
         selector(),
         () => Object.keys(this.stats.allItems()),
       ),
+      keys: new KeyQuizExercise(() => ({ staff: this.settings.staff, settings: this.settings.keyQuiz }), selector()),
     };
     this.trainer = new Trainer(this.exercise(), this.hub, this.stats, {
       onTask: (task) => this.showTask(task),
@@ -107,6 +111,15 @@ export class App {
       });
     }
     this.setupSelection();
+    this.keyQuiz = new KeyQuizPanel(
+      $('key-quiz'),
+      ({ major, minor }) => {
+        const task = this.trainer.currentTask();
+        if (!task || task.answer !== 'choice' || !task.key) return;
+        this.trainer.answerChoice(checkKeyAnswer(task, major, minor), `${germanKeyName(major)} / ${germanKeyName(minor)}`);
+      },
+      () => this.commit({ ...this.settings, keyQuiz: { ...this.settings.keyQuiz, showCircle: !this.settings.keyQuiz.showCircle } }),
+    );
 
     this.form = new SettingsForm($<HTMLFormElement>('settings'), {
       get: () => this.settings,
@@ -181,10 +194,15 @@ export class App {
 
   private showTask(task: Task): void {
     this.staff.render(task.layout, task.steps, 'none', task.key);
-    $('task-caption').textContent = task.key ? germanKeyName(task.key) : '';
-    this.feedbackEl.textContent = task.steps.length === 0 ? task.label : '';
+    // Name the key for playing tasks; for choice tasks the key is the question.
+    $('task-caption').textContent = task.key && task.answer === 'play' ? germanKeyName(task.key) : '';
+    this.feedbackEl.textContent = task.message ?? '';
     this.feedbackEl.className = 'feedback';
     this.detailEl.textContent = '';
+    const quiz = task.exerciseId === this.exercises.keys?.id;
+    $('key-quiz').hidden = !quiz;
+    $('keyboard-card').hidden = quiz;
+    if (quiz) this.keyQuiz.reset();
     const multi = task.answer === 'play' && taskPitches(task).length > 1;
     this.keyboard.setSelectionMode(this.settings.selectionMode && multi);
     $('selection-bar').hidden = !this.keyboard.isSelecting();
@@ -224,6 +242,7 @@ export class App {
       r.expected.forEach((m) => this.keyboard.flash(m, 'hint', 2400));
     }
     this.keyboard.clearSelection();
+    if (task.exerciseId === this.exercises.keys?.id && task.key) this.keyQuiz.showSolution(fifthsOf(task.key));
     $('m-last').textContent = r.reactionMs !== null ? formatMs(r.reactionMs) : '–';
     this.renderSession();
   }
@@ -312,7 +331,7 @@ export class App {
     const exerciseKey = (s: Settings) => {
       const copy: Partial<Settings> = { ...s };
       for (const k of DISPLAY_ONLY) delete copy[k];
-      return JSON.stringify(copy);
+      return JSON.stringify({ ...copy, keyQuiz: { ...s.keyQuiz, showCircle: null } });
     };
     const modeChanged = next.practice !== this.settings.practice;
     const exerciseChanged = exerciseKey(next) !== exerciseKey(this.settings);
@@ -333,6 +352,7 @@ export class App {
     this.keyboard.setRange(toMidi(range.low), toMidi(range.high));
     this.updateKeyboardLabels();
     this.updateModeNav();
+    this.keyQuiz.setCircleVisible(this.settings.keyQuiz.showCircle);
     this.form.showFor(this.settings.practice);
     this.form.updateRangeInfo();
     this.renderStatsTable();

@@ -153,7 +153,8 @@ export class IntervalExercise implements Exercise {
       answer: 'choice',
       steps: [],
       itemKey: `${INTERVAL_ID}|none`,
-      label: 'Im gewählten Tonumfang passt kein ausgewähltes Intervall – bitte Einstellungen anpassen.',
+      label: '',
+      message: 'Im gewählten Tonumfang passt kein ausgewähltes Intervall – bitte Einstellungen anpassen.',
     };
   }
 }

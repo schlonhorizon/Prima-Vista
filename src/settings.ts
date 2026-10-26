@@ -55,6 +55,13 @@ export interface ChordSettings {
   degrees: number[];
 }
 
+export interface KeyQuizSettings {
+  /** Signatures with at most this many accidentals (0–7). */
+  maxAccidentals: number;
+  /** Show the circle of fifths as a help. */
+  showCircle: boolean;
+}
+
 export interface Settings {
   practice: PracticeModeId;
   staff: StaffMode;
@@ -65,6 +72,7 @@ export interface Settings {
   key: KeySettings;
   intervals: IntervalSettings;
   chords: ChordSettings;
+  keyQuiz: KeyQuizSettings;
   showNoteNames: boolean;
   showComputerKeys: boolean;
   /** On-screen keyboard: select keys and confirm for tasks with several notes. */
@@ -95,6 +103,7 @@ export function defaultSettings(): Settings {
       presentation: 'mixed',
     },
     chords: { kinds: 'triads', inversions: [0, 1, 2, 3], degrees: [1, 2, 3, 4, 5, 6, 7] },
+    keyQuiz: { maxAccidentals: 7, showCircle: true },
     showNoteNames: false,
     showComputerKeys: true,
     selectionMode: true,
@@ -133,6 +142,7 @@ export function sanitize(raw: Record<string, unknown>): Settings {
     key: sanitizeKey(raw.key, d.key),
     intervals: sanitizeIntervals(raw.intervals, d.intervals),
     chords: sanitizeChords(raw.chords, d.chords),
+    keyQuiz: sanitizeKeyQuiz(raw.keyQuiz, d.keyQuiz),
     showNoteNames: bool(raw.showNoteNames, d.showNoteNames),
     showComputerKeys: bool(raw.showComputerKeys, d.showComputerKeys),
     selectionMode: bool(raw.selectionMode, d.selectionMode),
@@ -214,6 +224,14 @@ function sanitizeChords(raw: unknown, d: ChordSettings): ChordSettings {
     kinds: oneOf(r.kinds, ['triads', 'sevenths', 'both'], d.kinds),
     inversions: intList(r.inversions, 0, 3, d.inversions),
     degrees: intList(r.degrees, 1, 7, d.degrees),
+  };
+}
+
+function sanitizeKeyQuiz(raw: unknown, d: KeyQuizSettings): KeyQuizSettings {
+  const r = (raw ?? {}) as Partial<KeyQuizSettings>;
+  return {
+    maxAccidentals: int(r.maxAccidentals, 0, MAX_FIFTHS, d.maxAccidentals),
+    showCircle: bool(r.showCircle, d.showCircle),
   };
 }
 

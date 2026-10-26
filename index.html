@@ -38,6 +38,22 @@
         </div>
       </section>
 
+      <section class="card answer-card" id="key-quiz" hidden>
+        <div class="answer-row">
+          <span class="answer-label">Dur</span>
+          <div class="answer-buttons" data-key-row="major" role="group" aria-label="Dur-Tonart"></div>
+        </div>
+        <div class="answer-row">
+          <span class="answer-label">Moll</span>
+          <div class="answer-buttons" data-key-row="minor" role="group" aria-label="Moll-Tonart"></div>
+        </div>
+        <div class="answer-footer">
+          <button type="button" id="circle-toggle">Quintenzirkel ausblenden</button>
+          <span class="hint">Wähle die Dur- und die parallele Moll-Tonart.</span>
+        </div>
+        <div id="circle" class="circle"></div>
+      </section>
+
       <section class="session" aria-label="Aktuelle Sitzung">
         <div class="metric"><span class="metric-value" id="m-correct">0</span><span class="metric-label">Richtig</span></div>
         <div class="metric"><span class="metric-value" id="m-wrong">0</span><span class="metric-label">Falsch</span></div>
@@ -46,7 +62,7 @@
         <div class="metric"><span class="metric-value" id="m-last">–</span><span class="metric-label">Letzte</span></div>
       </section>
 
-      <section class="card keyboard-card">
+      <section class="card keyboard-card" id="keyboard-card">
         <div class="keyboard-bar">
           <span class="eyebrow">Computertastatur · Oktave <strong id="pc-octave">4</strong></span>
           <span class="keyboard-buttons">
@@ -143,6 +159,11 @@
             <div class="check-group full" id="degree-checks" role="group" aria-label="Stufen"></div>
             <p class="hint full">Die 3. Umkehrung gibt es nur bei Septakkorden. In Moll stammen V und vii° aus harmonischem Moll.</p>
           </fieldset>
+          <fieldset data-modes="keys">
+            <legend>Tonarten erkennen</legend>
+            <label>Vorzeichnungen bis <select name="quizMaxAccidentals"></select></label>
+            <label class="check"><input type="checkbox" name="showCircle" /> Quintenzirkel als Hilfe zeigen</label>
+          </fieldset>
           <fieldset data-modes="notes intervals chords">
             <legend>Lagen-Gewichtung</legend>
             <label>Kernzone ab <select name="coreLow"></select></label>
@@ -158,8 +179,8 @@
           </fieldset>
           <fieldset>
             <legend>Eingabe und Anzeige</legend>
-            <label class="check"><input type="checkbox" name="showNoteNames" /> Notennamen auf den Tasten</label>
-            <label class="check"><input type="checkbox" name="showComputerKeys" /> Computertasten auf den Tasten</label>
+            <label class="check" data-modes="notes intervals chords"><input type="checkbox" name="showNoteNames" /> Notennamen auf den Tasten</label>
+            <label class="check" data-modes="notes intervals chords"><input type="checkbox" name="showComputerKeys" /> Computertasten auf den Tasten</label>
             <label class="check" data-modes="intervals chords">
               <input type="checkbox" name="selectionMode" /> Bildschirmtastatur: Töne auswählen und bestätigen
             </label>

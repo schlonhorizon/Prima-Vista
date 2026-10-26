@@ -68,6 +68,8 @@ export class SettingsForm {
     this.select('intervalPresentation').value = s.intervals.presentation;
     this.select('intervalDirection').value = s.intervals.direction;
     this.setChecked('intervalAllowed', s.intervals.allowed);
+    this.select('quizMaxAccidentals').value = String(s.keyQuiz.maxAccidentals);
+    this.input('showCircle').checked = s.keyQuiz.showCircle;
     this.select('chordKinds').value = s.chords.kinds;
     this.setChecked('chordInversion', s.chords.inversions.map(String));
     this.setChecked('chordDegree', s.chords.degrees.map(String));
@@ -144,6 +146,10 @@ export class SettingsForm {
         allowed,
       },
       chords: { kinds: this.select('chordKinds').value as ChordSettings['kinds'], inversions, degrees },
+      keyQuiz: {
+        maxAccidentals: Number(this.select('quizMaxAccidentals').value),
+        showCircle: this.input('showCircle').checked,
+      },
       weighting: { coreLow, coreHigh, decayPerOctave: decay },
       showNoteNames: this.input('showNoteNames').checked,
       showComputerKeys: this.input('showComputerKeys').checked,
@@ -172,9 +178,11 @@ export class SettingsForm {
     minor.label = 'Moll';
     minor.append(...keyOptions('minor'));
     this.select('keyChoice').replaceChildren(new Option('Zufällig', RANDOM_KEY), major, minor);
-    this.select('maxAccidentals').replaceChildren(
-      ...Array.from({ length: 8 }, (_, n) => new Option(n === 0 ? 'ohne Vorzeichen' : `${n} Vorzeichen`, String(n))),
-    );
+    for (const name of ['maxAccidentals', 'quizMaxAccidentals']) {
+      this.select(name).replaceChildren(
+        ...Array.from({ length: 8 }, (_, n) => new Option(n === 0 ? 'ohne Vorzeichen' : `${n} Vorzeichen`, String(n))),
+      );
+    }
     this.fillChecks('#interval-checks', 'intervalAllowed', STANDARD_INTERVALS.map((id) => [id, STANDARD_INTERVAL_NAMES[id]]));
     this.fillChecks('#inversion-checks', 'chordInversion', [0, 1, 2, 3].map((i) => [String(i), inversionName(i)]));
     this.fillChecks('#degree-checks', 'chordDegree', DEGREE_NAMES.map((name, i) => [String(i + 1), `${name}. Stufe`]));

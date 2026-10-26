@@ -101,7 +101,8 @@ export class ChordExercise implements Exercise {
         answer: 'choice',
         steps: [],
         itemKey: `${CHORD_ID}|none`,
-        label: 'Im gewählten Tonumfang passt kein ausgewählter Akkord – bitte Einstellungen anpassen.',
+        label: '',
+      message: 'Im gewählten Tonumfang passt kein ausgewählter Akkord – bitte Einstellungen anpassen.',
       };
     }
     const r = this.selector.pick(candidates);

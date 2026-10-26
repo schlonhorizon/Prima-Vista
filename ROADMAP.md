@@ -18,7 +18,7 @@ Klaviersystem/Violin-/Bassschlüssel, Tonumfang-Presets und Lagen-Gewichtung.
 | 1    | Musiktheorie-Kern                  | fertig        |
 | 2    | Intervalle                         | fertig        |
 | 3    | Akkorde                            | fertig        |
-| 4    | Tonart erkennen                    | geplant       |
+| 4    | Tonart erkennen                    | fertig        |
 | 5    | Rhythmus (Timing-, Audio-Engine)   | geplant       |
 | 6    | Adaptive Logik                     | geplant       |
 | 7    | Abfolgen (Progressionen, Phrasen)  | geplant       |
@@ -163,12 +163,14 @@ Abhängig von: 1, Mehrton-Prüfung.
 - Im Klaviersystem bleibt ein Akkord, der über C4 reicht, in einem System (dem mit weniger
   Hilfslinien), solange er dort ohne Oktavierung passt – eine Hand liest ihn zusammen.
 
-## Teil 4: Tonart erkennen
+## Teil 4: Tonart erkennen ✔
 
 Abhängig von: 1.
 - Vorzeichnung im Notensystem; Antwort: Dur- und parallele Moll-Tonart per Button.
 - Quintenzirkel als ausblendbare Hilfe, hebt nach der Antwort die richtige Tonart hervor.
 - Statistik pro Vorzeichnung.
+- Die Antwort-Buttons sind nach Buchstaben sortiert (C, Cis, Ces, D …), nicht im Quintenzirkel,
+  damit die Antwort nicht durch Abzählen entsteht; die Antwort zählt nur, wenn Dur und Moll stimmen.
 
 ## Teil 5: Rhythmus (geplant)
 

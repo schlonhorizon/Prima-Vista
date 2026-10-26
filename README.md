@@ -12,6 +12,8 @@ Modi:
 - **Akkorde:** Stufenakkorde der Tonart als Dreiklänge und/oder Septakkorde, Grundstellung und
   Umkehrungen einzeln wählbar; danach Symbol, Stufe, Funktion und Lage („Am, vi, Tp,
   1. Umkehrung“), bei Fehlern fehlende und überzählige Töne.
+- **Tonarten:** Vorzeichnung erkennen, Dur- und parallele Moll-Tonart per Button wählen;
+  Quintenzirkel als ausblendbare Hilfe, der nach der Antwort die Lösung hervorhebt.
 
 Für alle Modi:
 
