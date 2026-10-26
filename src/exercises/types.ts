@@ -1,4 +1,4 @@
-import type { Clef } from '../core/clef';
+import type { StaffMode } from '../core/notation';
 import type { Pitch } from '../core/pitch';
 
 /**
@@ -14,7 +14,8 @@ export interface TaskStep {
 
 export interface Task {
   readonly exerciseId: string;
-  readonly clef: Clef;
+  /** Staff system the task is shown on; notes are placed per staff by the renderer. */
+  readonly layout: StaffMode;
   readonly steps: readonly TaskStep[];
   /** Statistics key for this item, e.g. "note|treble|C4". */
   readonly itemKey: string;

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { pitch } from '../src/core/pitch';
 import { memoryStorage } from '../src/core/storage';
 import { StepMatcher } from '../src/exercises/matcher';
-import { UniformSelector } from '../src/exercises/selection';
+import { WeightedSelector } from '../src/exercises/selection';
 import type { NoteEvent } from '../src/input/types';
 import { averageHitTime, RECENT_LIMIT, StatsStore } from '../src/stats/statsStore';
 
@@ -54,11 +54,11 @@ describe('StatsStore', () => {
   });
 });
 
-describe('UniformSelector', () => {
+describe('WeightedSelector repeat avoidance', () => {
   it('does not repeat the previous item', () => {
-    const sel = new UniformSelector(() => 0);
-    const items = ['a', 'b', 'c'];
-    const picks = Array.from({ length: 6 }, () => sel.pick(items, (s) => s));
+    const sel = new WeightedSelector({ random: () => 0 });
+    const items = ['a', 'b', 'c'].map((s) => ({ item: s, key: s, baseWeight: 1 }));
+    const picks = Array.from({ length: 6 }, () => sel.pick(items));
     for (let i = 1; i < picks.length; i++) expect(picks[i]).not.toBe(picks[i - 1]);
   });
 });

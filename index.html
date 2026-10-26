@@ -42,33 +42,55 @@
       <details class="card panel">
         <summary>Einstellungen</summary>
         <form id="settings" class="settings">
-          <label>Tiefste Note <select name="rangeLow"></select></label>
-          <label>Höchste Note <select name="rangeHigh"></select></label>
-          <label>
-            Vorzeichen
-            <select name="accidentals">
-              <option value="none">keine</option>
-              <option value="sharps">Kreuze (♯)</option>
-              <option value="flats">Bs (♭)</option>
-              <option value="both">Kreuze und Bs</option>
-            </select>
-          </label>
-          <label class="check"><input type="checkbox" name="showNoteNames" /> Notennamen auf den Tasten</label>
-          <label class="check"><input type="checkbox" name="showComputerKeys" /> Computertasten auf den Tasten</label>
+          <fieldset>
+            <legend>Übung</legend>
+            <label>
+              Notensystem
+              <select name="mode">
+                <option value="treble">Violinschlüssel</option>
+                <option value="bass">Bassschlüssel</option>
+                <option value="grand">Klaviersystem (Violin + Bass)</option>
+              </select>
+            </label>
+            <label>Tonumfang <select name="rangePreset"></select></label>
+            <label class="manual-only">Tiefste Note <select name="rangeLow"></select></label>
+            <label class="manual-only">Höchste Note <select name="rangeHigh"></select></label>
+            <label>
+              Vorzeichen
+              <select name="accidentals">
+                <option value="none">keine</option>
+                <option value="sharps">Kreuze (♯)</option>
+                <option value="flats">Bs (♭)</option>
+                <option value="both">Kreuze und Bs</option>
+              </select>
+            </label>
+            <p class="hint full" id="range-info"></p>
+          </fieldset>
+          <fieldset>
+            <legend>Lagen-Gewichtung</legend>
+            <label>Kernzone ab <select name="coreLow"></select></label>
+            <label>Kernzone bis <select name="coreHigh"></select></label>
+            <label>
+              Faktor pro Oktave außerhalb
+              <input type="number" name="decayPerOctave" min="0" max="1" step="0.05" inputmode="decimal" />
+            </label>
+            <p class="hint full">
+              Töne in der Kernzone kommen gleich oft dran (Gewicht 1). Außerhalb wird das Gewicht pro
+              Oktave Abstand mit dem Faktor multipliziert – bei 0,5 also 0,5, dann 0,25 usw.
+            </p>
+          </fieldset>
+          <fieldset>
+            <legend>Anzeige</legend>
+            <label class="check"><input type="checkbox" name="showNoteNames" /> Notennamen auf den Tasten</label>
+            <label class="check"><input type="checkbox" name="showComputerKeys" /> Computertasten auf den Tasten</label>
+          </fieldset>
           <p class="error" id="settings-error" hidden></p>
         </form>
       </details>
 
       <details class="card panel">
         <summary>Statistik pro Note</summary>
-        <div class="table-wrap">
-          <table class="stats-table">
-            <thead>
-              <tr><th>Note</th><th>Richtig</th><th>Falsch</th><th>Quote</th><th>Ø Zeit</th></tr>
-            </thead>
-            <tbody id="stats-body"></tbody>
-          </table>
-        </div>
+        <div id="stats-groups" class="stats-groups"></div>
         <button type="button" id="reset-stats" class="danger">Statistik zurücksetzen</button>
       </details>
     </main>
