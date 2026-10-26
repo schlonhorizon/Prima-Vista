@@ -16,7 +16,7 @@ npm install
 npm run dev
 ```
 
-Dann <http://localhost:5173/notenleser/> öffnen. Für MIDI Chrome oder Edge verwenden;
+Dann <http://localhost:5173/notenlernen/> öffnen. Für MIDI Chrome oder Edge verwenden;
 Web MIDI funktioniert nur über `localhost` oder HTTPS. Firefox fragt beim ersten Zugriff nach
 einer Erlaubnis, Safari unterstützt kein Web MIDI (Maus und Tastatur gehen trotzdem).
 
@@ -25,7 +25,7 @@ Weitere Befehle:
 | Befehl                 | Zweck                                                        |
 | ---------------------- | ------------------------------------------------------------ |
 | `npm test`             | Unit-Tests (Vitest)                                          |
-| `npm run build`        | Build für GitHub Pages nach `dist/` (Base-Pfad `/notenleser/`) |
+| `npm run build`        | Build für GitHub Pages nach `dist/` (Base-Pfad `/notenlernen/`) |
 | `npm run build:static` | Build mit relativen Pfaden, für beliebigen Webspace-Ordner   |
 | `npm run preview`      | gebauten Stand lokal ansehen                                 |
 
@@ -33,6 +33,7 @@ Weitere Befehle:
 
 - **GitHub Pages:** `.github/workflows/deploy.yml` baut und veröffentlicht bei jedem Push auf
   `main`. Einmalig in den Repo-Einstellungen unter *Pages → Source* „GitHub Actions“ wählen.
+  Die App liegt dann unter <https://schlonhorizon.github.io/notenlernen/>.
 - **Webspace:** `npm run build:static` und den Inhalt von `dist/` hochladen.
 
 ## Struktur
