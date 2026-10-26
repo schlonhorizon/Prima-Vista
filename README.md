@@ -9,6 +9,9 @@ Modi:
 - **Einzelnoten:** zufällige Einzelnote, chromatisch, ohne Tonart.
 - **Intervalle:** melodisch, harmonisch oder gemischt; leitereigen in einer Tonart (mit
   Vorzeichnung) oder chromatisch; Intervalle und Richtung wählbar.
+- **Akkorde:** Stufenakkorde der Tonart als Dreiklänge und/oder Septakkorde, Grundstellung und
+  Umkehrungen einzeln wählbar; danach Symbol, Stufe, Funktion und Lage („Am, vi, Tp,
+  1. Umkehrung“), bei Fehlern fehlende und überzählige Töne.
 
 Für alle Modi:
 

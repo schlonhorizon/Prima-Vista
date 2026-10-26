@@ -17,7 +17,7 @@ Klaviersystem/Violin-/Bassschlüssel, Tonumfang-Presets und Lagen-Gewichtung.
 | –    | Einzelnoten, Klaviersystem, Design | fertig        |
 | 1    | Musiktheorie-Kern                  | fertig        |
 | 2    | Intervalle                         | fertig        |
-| 3    | Akkorde                            | geplant       |
+| 3    | Akkorde                            | fertig        |
 | 4    | Tonart erkennen                    | geplant       |
 | 5    | Rhythmus (Timing-, Audio-Engine)   | geplant       |
 | 6    | Adaptive Logik                     | geplant       |
@@ -151,7 +151,7 @@ Abhängig von: 1.
 - Übungselement: Intervall × Richtung × Darstellung; die konkrete Lage wird über die
   Lagen-Gewichtung gezogen.
 
-## Teil 3: Akkorde
+## Teil 3: Akkorde ✔
 
 Abhängig von: 1, Mehrton-Prüfung.
 - Stufenakkorde der Tonart, Dreiklänge und/oder Septakkorde, Grundstellung und Umkehrungen einzeln
@@ -160,6 +160,8 @@ Abhängig von: 1, Mehrton-Prüfung.
   zusätzliche Töne sind Fehler; Reaktionszeit bis zum vollständigen Akkord.
 - Nach der Antwort: Symbol, Stufe, Funktion, Lage („Am, vi, Tp, 1. Umkehrung“); bei Fehlern
   fehlende und überzählige Töne, richtige Tasten markiert.
+- Im Klaviersystem bleibt ein Akkord, der über C4 reicht, in einem System (dem mit weniger
+  Hilfslinien), solange er dort ohne Oktavierung passt – eine Hand liest ihn zusammen.
 
 ## Teil 4: Tonart erkennen
 
@@ -222,6 +224,8 @@ Abhängig von: 7; 5 für die wandernde Variante.
   bekommt Mehrtakt-Layout und Sichtbarkeitsmaske pro Note.
 - Beide Hände: zuerst gleichzeitige Töne in beiden Systemen, dann Melodie rechts + Begleitung links
   (Passagen-Generator mit zwei Stimmen).
+- Steps bekommen dafür eine explizite Hand-/System-Zuordnung pro Ton; die automatische
+  Zuordnung (C4-Grenze, Akkorde zusammenhalten) bleibt der Standard für einhändige Aufgaben.
 
 ## Teil 9: Leadsheets und Voicings (geplant)
 

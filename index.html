@@ -129,6 +129,20 @@
             </label>
             <div class="check-group full" id="interval-checks" role="group" aria-label="Intervalle"></div>
           </fieldset>
+          <fieldset data-modes="chords">
+            <legend>Akkorde</legend>
+            <label>
+              Akkordart
+              <select name="chordKinds">
+                <option value="triads">Dreiklänge</option>
+                <option value="sevenths">Septakkorde</option>
+                <option value="both">Dreiklänge und Septakkorde</option>
+              </select>
+            </label>
+            <div class="check-group full" id="inversion-checks" role="group" aria-label="Lagen"></div>
+            <div class="check-group full" id="degree-checks" role="group" aria-label="Stufen"></div>
+            <p class="hint full">Die 3. Umkehrung gibt es nur bei Septakkorden. In Moll stammen V und vii° aus harmonischem Moll.</p>
+          </fieldset>
           <fieldset data-modes="notes intervals chords">
             <legend>Lagen-Gewichtung</legend>
             <label>Kernzone ab <select name="coreLow"></select></label>

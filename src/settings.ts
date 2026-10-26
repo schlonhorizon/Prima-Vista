@@ -45,6 +45,16 @@ export interface IntervalSettings {
   presentation: IntervalPresentation;
 }
 
+export type ChordKinds = 'triads' | 'sevenths' | 'both';
+
+export interface ChordSettings {
+  kinds: ChordKinds;
+  /** 0 = root position, 1–3 = inversions (3 only for seventh chords). */
+  inversions: number[];
+  /** Scale degrees 1–7. */
+  degrees: number[];
+}
+
 export interface Settings {
   practice: PracticeModeId;
   staff: StaffMode;
@@ -54,6 +64,7 @@ export interface Settings {
   weighting: RegisterWeighting;
   key: KeySettings;
   intervals: IntervalSettings;
+  chords: ChordSettings;
   showNoteNames: boolean;
   showComputerKeys: boolean;
   /** On-screen keyboard: select keys and confirm for tasks with several notes. */
@@ -83,6 +94,7 @@ export function defaultSettings(): Settings {
       direction: 'both',
       presentation: 'mixed',
     },
+    chords: { kinds: 'triads', inversions: [0, 1, 2, 3], degrees: [1, 2, 3, 4, 5, 6, 7] },
     showNoteNames: false,
     showComputerKeys: true,
     selectionMode: true,
@@ -120,6 +132,7 @@ export function sanitize(raw: Record<string, unknown>): Settings {
     weighting: { ...d.weighting },
     key: sanitizeKey(raw.key, d.key),
     intervals: sanitizeIntervals(raw.intervals, d.intervals),
+    chords: sanitizeChords(raw.chords, d.chords),
     showNoteNames: bool(raw.showNoteNames, d.showNoteNames),
     showComputerKeys: bool(raw.showComputerKeys, d.showComputerKeys),
     selectionMode: bool(raw.selectionMode, d.selectionMode),
@@ -186,6 +199,21 @@ function sanitizeIntervals(raw: unknown, d: IntervalSettings): IntervalSettings 
     allowed: allowed.length > 0 ? STANDARD_INTERVALS.filter((i) => allowed.includes(i)) : [...d.allowed],
     direction: oneOf(r.direction, ['up', 'down', 'both'], d.direction),
     presentation: oneOf(r.presentation, ['melodic', 'harmonic', 'mixed'], d.presentation),
+  };
+}
+
+function intList(v: unknown, min: number, max: number, fallback: number[]): number[] {
+  if (!Array.isArray(v)) return [...fallback];
+  const list = [...new Set(v.filter((x): x is number => Number.isInteger(x) && x >= min && x <= max))].sort();
+  return list.length > 0 ? list : [...fallback];
+}
+
+function sanitizeChords(raw: unknown, d: ChordSettings): ChordSettings {
+  const r = (raw ?? {}) as Partial<ChordSettings>;
+  return {
+    kinds: oneOf(r.kinds, ['triads', 'sevenths', 'both'], d.kinds),
+    inversions: intList(r.inversions, 0, 3, d.inversions),
+    degrees: intList(r.degrees, 1, 7, d.degrees),
   };
 }
 

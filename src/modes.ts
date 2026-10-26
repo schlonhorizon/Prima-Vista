@@ -13,7 +13,7 @@ export interface ModeInfo {
 export const MODES: readonly ModeInfo[] = [
   { id: 'notes', label: 'Einzelnoten', ready: true },
   { id: 'intervals', label: 'Intervalle', ready: true },
-  { id: 'chords', label: 'Akkorde', ready: false },
+  { id: 'chords', label: 'Akkorde', ready: true },
   { id: 'keys', label: 'Tonarten', ready: false },
   { id: 'rhythm', label: 'Rhythmus', ready: false },
   { id: 'progressions', label: 'Abfolgen', ready: false },

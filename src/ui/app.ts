@@ -1,5 +1,6 @@
 import { germanName, midiToPitch, toMidi } from '../core/pitch';
 import type { KeyValueStorage } from '../core/storage';
+import { ChordExercise } from '../exercises/chords';
 import { IntervalExercise } from '../exercises/intervals';
 import { KeyContext } from '../exercises/keyContext';
 import { WeightedSelector } from '../exercises/selection';
@@ -79,6 +80,12 @@ export class App {
         () => ({ ...common(), settings: this.settings.intervals, chordWindowMs: this.settings.chordWindowMs }),
         this.keyContext,
         selector(),
+      ),
+      chords: new ChordExercise(
+        () => ({ ...common(), settings: this.settings.chords, chordWindowMs: this.settings.chordWindowMs }),
+        this.keyContext,
+        selector(),
+        () => Object.keys(this.stats.allItems()),
       ),
     };
     this.trainer = new Trainer(this.exercise(), this.hub, this.stats, {

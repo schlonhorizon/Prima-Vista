@@ -73,11 +73,41 @@ export function shiftOctaves(p: Pitch, octaves: number): Pitch {
   return pitch(p.step, p.alter, p.octave + octaves);
 }
 
+/** Ledger lines a pitch needs on a clef (0 inside the staff). */
+export function ledgerLines(p: Pitch, clef: Clef): number {
+  const d = diatonicIndex(p);
+  const bottom = diatonicIndex(clefPitch(CLEFS[clef].bottomLine));
+  const top = diatonicIndex(clefPitch(CLEFS[clef].topLine));
+  if (d > top) return Math.floor((d - top) / 2);
+  if (d < bottom) return Math.floor((bottom - d) / 2);
+  return 0;
+}
+
+/**
+ * Staff for a whole chord in the grand staff when it crosses middle C: one hand
+ * reads a chord best on one staff. Returns null if it does not fit on either
+ * staff within the ledger-line limit (then the notes are split at C4).
+ */
+function grandStaffForChord(pitches: readonly Pitch[]): Clef | null {
+  const clefs = new Set(pitches.map((p) => clefForPitch('grand', p)));
+  if (clefs.size < 2) return null;
+  const fits = (['treble', 'bass'] as const).filter((clef) => {
+    const { low, high } = writableRange(clef);
+    return pitches.every((p) => diatonicIndex(p) >= low && diatonicIndex(p) <= high);
+  });
+  if (fits.length === 0) return null;
+  const cost = (clef: Clef) => Math.max(...pitches.map((p) => ledgerLines(p, clef)));
+  return fits.reduce((best, clef) => (cost(clef) < cost(best) ? clef : best));
+}
+
 /** Distributes the pitches of one step onto the staves of a mode. */
 export function placePitches(mode: StaffMode, pitches: readonly Pitch[]): StaffGroup[] {
+  const together = mode === 'grand' ? grandStaffForChord(pitches) : null;
   return clefsOf(mode)
     .map((clef) => {
-      const own = pitches.filter((p) => clefForPitch(mode, p) === clef);
+      const own = together
+        ? together === clef ? [...pitches] : []
+        : pitches.filter((p) => clefForPitch(mode, p) === clef);
       const ottava = chooseOttava(own, clef);
       return { clef, ottava, pitches: own, written: own.map((p) => shiftOctaves(p, -ottava)) };
     })

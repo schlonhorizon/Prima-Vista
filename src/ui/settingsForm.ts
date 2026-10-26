@@ -9,11 +9,15 @@ import {
   MANUAL_RANGE,
   RANDOM_KEY,
   STANDARD_INTERVALS,
+  type ChordSettings,
   type IntervalSettings,
   type Settings,
   type StandardInterval,
 } from '../settings';
+import { inversionName } from '../theory/chords';
 import { ALL_KEYS, germanKeyName, keyId } from '../theory/key';
+
+const DEGREE_NAMES = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
 
 export interface SettingsFormHooks {
   get(): Settings;
@@ -63,9 +67,10 @@ export class SettingsForm {
     this.select('intervalScope').value = s.intervals.scope;
     this.select('intervalPresentation').value = s.intervals.presentation;
     this.select('intervalDirection').value = s.intervals.direction;
-    this.form.querySelectorAll<HTMLInputElement>('input[name="intervalAllowed"]').forEach((el) => {
-      el.checked = s.intervals.allowed.includes(el.value as StandardInterval);
-    });
+    this.setChecked('intervalAllowed', s.intervals.allowed);
+    this.select('chordKinds').value = s.chords.kinds;
+    this.setChecked('chordInversion', s.chords.inversions.map(String));
+    this.setChecked('chordDegree', s.chords.degrees.map(String));
     this.select('coreLow').value = s.weighting.coreLow;
     this.select('coreHigh').value = s.weighting.coreHigh;
     this.input('decayPerOctave').value = String(s.weighting.decayPerOctave);
@@ -114,10 +119,12 @@ export class SettingsForm {
     if (!Number.isInteger(windowMs) || windowMs < 0 || windowMs > 5000) {
       return this.showError('Das Zeitfenster muss zwischen 0 und 5000 ms liegen.');
     }
-    const allowed = [...this.form.querySelectorAll<HTMLInputElement>('input[name="intervalAllowed"]:checked')].map(
-      (el) => el.value as StandardInterval,
-    );
+    const allowed = this.checked('intervalAllowed') as StandardInterval[];
     if (allowed.length === 0) return this.showError('Bitte mindestens ein Intervall auswählen.');
+    const inversions = this.checked('chordInversion').map(Number);
+    if (inversions.length === 0) return this.showError('Bitte mindestens eine Lage (Grundstellung/Umkehrung) auswählen.');
+    const degrees = this.checked('chordDegree').map(Number);
+    if (degrees.length === 0) return this.showError('Bitte mindestens eine Stufe auswählen.');
     this.hideError();
 
     this.hooks.change({
@@ -136,6 +143,7 @@ export class SettingsForm {
         direction: this.select('intervalDirection').value as IntervalSettings['direction'],
         allowed,
       },
+      chords: { kinds: this.select('chordKinds').value as ChordSettings['kinds'], inversions, degrees },
       weighting: { coreLow, coreHigh, decayPerOctave: decay },
       showNoteNames: this.input('showNoteNames').checked,
       showComputerKeys: this.input('showComputerKeys').checked,
@@ -167,18 +175,34 @@ export class SettingsForm {
     this.select('maxAccidentals').replaceChildren(
       ...Array.from({ length: 8 }, (_, n) => new Option(n === 0 ? 'ohne Vorzeichen' : `${n} Vorzeichen`, String(n))),
     );
-    this.form.querySelector('#interval-checks')!.replaceChildren(
-      ...STANDARD_INTERVALS.map((id) => {
+    this.fillChecks('#interval-checks', 'intervalAllowed', STANDARD_INTERVALS.map((id) => [id, STANDARD_INTERVAL_NAMES[id]]));
+    this.fillChecks('#inversion-checks', 'chordInversion', [0, 1, 2, 3].map((i) => [String(i), inversionName(i)]));
+    this.fillChecks('#degree-checks', 'chordDegree', DEGREE_NAMES.map((name, i) => [String(i + 1), `${name}. Stufe`]));
+  }
+
+  private fillChecks(selector: string, name: string, options: [value: string, label: string][]): void {
+    this.form.querySelector(selector)!.replaceChildren(
+      ...options.map(([value, text]) => {
         const label = document.createElement('label');
         label.className = 'check';
         const box = document.createElement('input');
         box.type = 'checkbox';
-        box.name = 'intervalAllowed';
-        box.value = id;
-        label.append(box, ` ${STANDARD_INTERVAL_NAMES[id]}`);
+        box.name = name;
+        box.value = value;
+        label.append(box, ` ${text}`);
         return label;
       }),
     );
+  }
+
+  private checked(name: string): string[] {
+    return [...this.form.querySelectorAll<HTMLInputElement>(`input[name="${name}"]:checked`)].map((el) => el.value);
+  }
+
+  private setChecked(name: string, values: string[]): void {
+    this.form.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`).forEach((el) => {
+      el.checked = values.includes(el.value);
+    });
   }
 
   /** Fills the manual range selects with what the current staff system can display. */

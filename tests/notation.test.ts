@@ -63,4 +63,14 @@ describe('single staff modes', () => {
     expect(pitchId(displayableRange('grand').low)).toBe('A0');
     expect(pitchId(displayableRange('grand').high)).toBe('C8');
   });
+
+  it('keeps a chord across middle C on one staff', () => {
+    const groups = placePitches('grand', ['F##3', 'A#3', 'C#4', 'E4'].map(p));
+    expect(groups).toHaveLength(1);
+    expect(groups[0].clef).toBe('bass'); // E4 needs 2 ledger lines in bass, F##3 needs 3 in treble
+    const low = placePitches('grand', ['G3', 'B3', 'D4'].map(p));
+    expect(low.map((g) => g.clef)).toEqual(['bass']);
+    // too wide for one staff without ottava: split at C4
+    expect(placePitches('grand', ['C2', 'C6'].map(p)).map((g) => g.clef)).toEqual(['treble', 'bass']);
+  });
 });
