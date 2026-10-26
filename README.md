@@ -1,9 +1,24 @@
 # Prima Vista
 
-Webapp zum Trainieren des Notenlesens am Klavier. Eine zufällige Note erscheint im
-Violinschlüssel, Bassschlüssel oder Klaviersystem, du spielst sie, die App zeigt richtig/falsch
-und misst die Reaktionszeit.
+Webapp zum Trainieren des Blattspiels am Klavier: sehen, verstehen, spielen. Die App zeigt eine
+Aufgabe im Violinschlüssel, Bassschlüssel oder Klaviersystem, du spielst sie, die App zeigt
+richtig/falsch und misst die Reaktionszeit.
 
+Modi:
+
+- **Einzelnoten:** zufällige Einzelnote, chromatisch, ohne Tonart.
+- **Intervalle:** melodisch, harmonisch oder gemischt; leitereigen in einer Tonart (mit
+  Vorzeichnung) oder chromatisch; Intervalle und Richtung wählbar.
+- **Akkorde:** Stufenakkorde der Tonart als Dreiklänge und/oder Septakkorde, Grundstellung und
+  Umkehrungen einzeln wählbar; danach Symbol, Stufe, Funktion und Lage („Am, vi, Tp,
+  1. Umkehrung“), bei Fehlern fehlende und überzählige Töne.
+- **Tonarten:** Vorzeichnung erkennen, Dur- und parallele Moll-Tonart per Button wählen;
+  Quintenzirkel als ausblendbare Hilfe, der nach der Antwort die Lösung hervorhebt.
+
+Für alle Modi:
+
+- **Tonart:** fest gewählt oder zufällig (bis n Vorzeichen, mit/ohne Moll, Wechsel alle n Aufgaben),
+  korrekte Vorzeichnung und enharmonisch korrekte Schreibweise.
 - **Klaviersystem:** Noten ab C4 im Violin-, darunter im Bassschlüssel. Bis zu 4 Hilfslinien
   werden normal notiert, weiter außen mit 8va/8vb (am oberen Rand des Klaviers 15ma).
 - **Tonumfang:** Preset „Nord Stage 4 (88 Tasten, A0–C8)“ oder manuell, je Notensystem getrennt
@@ -13,6 +28,8 @@ und misst die Reaktionszeit.
 
 Eingabe über MIDI-Keyboard (Web MIDI, z. B. Nord Stage 4 per USB), die Bildschirmtastatur
 oder die Computertastatur (A–K weiße Tasten, W E T Z U O P schwarze Tasten, Y/X Oktave).
+Mehrere gleichzeitig gedrückte Tasten zählen als Akkord. Auf der Bildschirmtastatur werden Töne
+mehrstimmiger Aufgaben ausgewählt und mit „Auswahl bestätigen“ oder der Leertaste gespielt.
 Fortschritt und Einstellungen liegen im `localStorage` des Browsers. Daten aus der Zeit, als
 die App noch „Notenleser“ hieß, werden beim ersten Start automatisch übernommen.
 
@@ -56,6 +73,7 @@ src/
   core/        Tonhöhen (Pitch, MIDI, deutsche Namen), Schlüssel, Notensatz (Staff-Zuordnung,
                Hilfslinien, Oktavierung), Tonumfang, Presets, Lagen-Gewichtung, Storage
   input/       InputHub + Quellen: Web MIDI, Computertastatur
+  theory/      Musiktheorie: Intervalle, Tonarten, Tonleiter-Katalog, Stufenakkorde, Benennungen
   exercises/   Aufgabenmodell (Task/Step), Generator „Einzelnoten“, Matcher, Auswahl
   stats/       Statistik pro Item (Treffer, Fehler, Zeiten, Verwechslungen)
   render/      Notenzeile bzw. Klaviersystem mit VexFlow
@@ -63,13 +81,4 @@ src/
   ui/          App-Verdrahtung, Bildschirmtastatur, Statistik nach Oktaven
 ```
 
-Vorbereitet für spätere Schritte:
-
-- **Intervalle, Akkorde, Phrasen:** Eine `Task` besteht aus `steps`, jeder Step aus mehreren
-  Tönen. Der `StepMatcher` prüft bereits gleichzeitig gehaltene Töne, der Trainer arbeitet
-  Steps der Reihe nach ab, der Renderer verteilt die Töne eines Steps auf beide Systeme.
-  Neue Übungen implementieren nur `Exercise.nextTask()`.
-- **Adaptive Gewichtung:** Der `WeightedSelector` zieht proportional zu
-  `Grundgewicht × Modifikatoren`. Ein adaptiver Faktor wird als `WeightModifier` ergänzt, der
-  aus `StatsStore.getItem()` (Trefferquote, Ø-Zeit, letzte 50 Versuche, zuletzt gesehen) einen
-  Multiplikator berechnet.
+Gesamtarchitektur, Designentscheidungen und die geplanten Teile stehen in [ROADMAP.md](ROADMAP.md).

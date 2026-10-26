@@ -12,8 +12,10 @@ import {
 } from 'vexflow/bravura';
 import type { Clef } from '../core/clef';
 import { clefsOf, placePitches, type Ottava, type StaffMode } from '../core/notation';
-import { toVexKey } from '../core/pitch';
+import { toVexKey, type Pitch } from '../core/pitch';
 import type { TaskStep } from '../exercises/types';
+import { fifthsOf, keySignature, vexKeySpec, type Key } from '../theory/key';
+import { accidentalMarks } from './accidentals';
 
 export type NoteHighlight = 'none' | 'correct' | 'wrong';
 
@@ -42,7 +44,12 @@ const LAYOUT = {
 export class StaffRenderer {
   constructor(private container: HTMLElement) {}
 
-  render(mode: StaffMode, steps: readonly TaskStep[], highlight: NoteHighlight = 'none'): void {
+  render(
+    mode: StaffMode,
+    steps: readonly TaskStep[],
+    highlight: NoteHighlight = 'none',
+    key: Key | null = null,
+  ): void {
     this.container.replaceChildren();
     const layout = mode === 'grand' ? LAYOUT.grand : LAYOUT.single;
     const available = this.container.clientWidth || BASE_WIDTH;
@@ -53,11 +60,15 @@ export class StaffRenderer {
     const ctx = renderer.getContext();
     ctx.scale(scale, scale);
 
+    const fifths = key ? fifthsOf(key) : 0;
+    const signature = keySignature(fifths);
     const clefs = clefsOf(mode);
     const staves = new Map<Clef, Stave>();
     clefs.forEach((clef, i) => {
       const stave = new Stave(layout.left, layout.staveY[i], BASE_WIDTH - layout.left - 10);
-      stave.addClef(clef).setContext(ctx).draw();
+      stave.addClef(clef);
+      if (fifths !== 0) stave.addKeySignature(vexKeySpec(fifths));
+      stave.setContext(ctx).draw();
       staves.set(clef, stave);
     });
     if (mode === 'grand') {
@@ -71,15 +82,17 @@ export class StaffRenderer {
     const brackets: Array<{ note: StaveNote; ottava: Exclude<Ottava, 0> }> = [];
     const voices = new Map<Clef, Voice>();
     for (const clef of clefs) {
-      const tickables = steps.map((step) => {
-        const group = placePitches(mode, step.pitches).find((g) => g.clef === clef);
+      const groups = steps.map((step) => placePitches(mode, step.pitches).find((g) => g.clef === clef));
+      // Accidentals are decided per staff over the whole measure, relative to the key signature.
+      const marks = accidentalMarks(groups.map((g) => (g ? g.written : ([] as Pitch[]))), signature);
+      const tickables = groups.map((group, stepIndex) => {
         let note: Note;
         if (!group) {
           note = new GhostNote({ duration: 'w' });
         } else {
           const staveNote = new StaveNote({ clef, keys: group.written.map(toVexKey), duration: 'w' });
-          group.written.forEach((p, i) => {
-            if (p.alter !== 0) staveNote.addModifier(new Accidental(p.alter === 1 ? '#' : 'b'), i);
+          marks[stepIndex].forEach((mark, i) => {
+            if (mark) staveNote.addModifier(new Accidental(mark), i);
           });
           staveNote.setStyle({ fillStyle: color, strokeStyle: color });
           if (group.ottava !== 0) brackets.push({ note: staveNote, ottava: group.ottava });
@@ -93,6 +106,10 @@ export class StaffRenderer {
       voice.addTickables(tickables);
       voices.set(clef, voice);
     }
+
+    // Align the staves of a grand staff and leave some air after the signature for note sequences.
+    const startX = Math.max(...[...staves.values()].map((st) => st.getNoteStartX())) + (steps.length > 1 ? 18 : 0);
+    for (const st of staves.values()) st.setNoteStartX(startX);
 
     const formatter = new Formatter();
     for (const voice of voices.values()) formatter.joinVoices([voice]);

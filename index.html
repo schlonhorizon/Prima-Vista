@@ -26,11 +26,32 @@
       <div id="midi-status" class="midi-status" role="status"></div>
     </header>
     <div class="brass-rule" aria-hidden="true"><span></span></div>
+    <nav class="modes" id="modes" aria-label="Übungsmodus"></nav>
 
     <main class="layout">
       <section class="card staff-card">
+        <p class="task-caption" id="task-caption"></p>
         <div id="staff" class="staff"></div>
-        <div id="feedback" class="feedback" aria-live="polite"></div>
+        <div class="feedback-area" aria-live="polite">
+          <p id="feedback" class="feedback"></p>
+          <p id="feedback-detail" class="feedback-detail"></p>
+        </div>
+      </section>
+
+      <section class="card answer-card" id="key-quiz" hidden>
+        <div class="answer-row">
+          <span class="answer-label">Dur</span>
+          <div class="answer-buttons" data-key-row="major" role="group" aria-label="Dur-Tonart"></div>
+        </div>
+        <div class="answer-row">
+          <span class="answer-label">Moll</span>
+          <div class="answer-buttons" data-key-row="minor" role="group" aria-label="Moll-Tonart"></div>
+        </div>
+        <div class="answer-footer">
+          <button type="button" id="circle-toggle">Quintenzirkel ausblenden</button>
+          <span class="hint">Wähle die Dur- und die parallele Moll-Tonart.</span>
+        </div>
+        <div id="circle" class="circle"></div>
       </section>
 
       <section class="session" aria-label="Aktuelle Sitzung">
@@ -41,7 +62,7 @@
         <div class="metric"><span class="metric-value" id="m-last">–</span><span class="metric-label">Letzte</span></div>
       </section>
 
-      <section class="card keyboard-card">
+      <section class="card keyboard-card" id="keyboard-card">
         <div class="keyboard-bar">
           <span class="eyebrow">Computertastatur · Oktave <strong id="pc-octave">4</strong></span>
           <span class="keyboard-buttons">
@@ -49,6 +70,10 @@
             <button type="button" id="octave-up" title="Oktave höher">+ Oktave</button>
           </span>
           <span class="hint" id="octave-hint"></span>
+          <span class="selection-bar" id="selection-bar" hidden>
+            <button type="button" id="confirm-selection" class="primary" disabled>Auswahl bestätigen</button>
+            <span class="hint">oder Leertaste</span>
+          </span>
         </div>
         <div id="keyboard" class="keyboard"></div>
       </section>
@@ -57,19 +82,19 @@
         <summary>Einstellungen</summary>
         <form id="settings" class="settings">
           <fieldset>
-            <legend>Übung</legend>
+            <legend>Notensystem und Tonumfang</legend>
             <label>
               Notensystem
-              <select name="mode">
+              <select name="staff">
                 <option value="treble">Violinschlüssel</option>
                 <option value="bass">Bassschlüssel</option>
                 <option value="grand">Klaviersystem (Violin + Bass)</option>
               </select>
             </label>
-            <label>Tonumfang <select name="rangePreset"></select></label>
-            <label class="manual-only">Tiefste Note <select name="rangeLow"></select></label>
-            <label class="manual-only">Höchste Note <select name="rangeHigh"></select></label>
-            <label>
+            <label data-modes="notes intervals chords">Tonumfang <select name="rangePreset"></select></label>
+            <label class="manual-only" data-modes="notes intervals chords">Tiefste Note <select name="rangeLow"></select></label>
+            <label class="manual-only" data-modes="notes intervals chords">Höchste Note <select name="rangeHigh"></select></label>
+            <label data-modes="notes">
               Vorzeichen
               <select name="accidentals">
                 <option value="none">keine</option>
@@ -78,9 +103,68 @@
                 <option value="both">Kreuze und Bs</option>
               </select>
             </label>
-            <p class="hint full" id="range-info"></p>
+            <p class="hint full" id="range-info" data-modes="notes intervals chords"></p>
           </fieldset>
-          <fieldset>
+          <fieldset data-modes="intervals chords">
+            <legend>Tonart</legend>
+            <label>Tonart <select name="keyChoice"></select></label>
+            <label>
+              Zufällige Tonarten bis
+              <select name="maxAccidentals"></select>
+            </label>
+            <label>
+              Neue Zufallstonart alle
+              <input type="number" name="changeEvery" min="1" max="1000" step="1" inputmode="numeric" />
+            </label>
+            <label class="check"><input type="checkbox" name="includeMinor" /> Moll-Tonarten einbeziehen</label>
+          </fieldset>
+          <fieldset data-modes="intervals">
+            <legend>Intervalle</legend>
+            <label>
+              Töne
+              <select name="intervalScope">
+                <option value="key">leitereigen (in der Tonart)</option>
+                <option value="chromatic">chromatisch (ohne Vorzeichnung)</option>
+              </select>
+            </label>
+            <label>
+              Darstellung
+              <select name="intervalPresentation">
+                <option value="melodic">melodisch (nacheinander)</option>
+                <option value="harmonic">harmonisch (zusammen)</option>
+                <option value="mixed">gemischt</option>
+              </select>
+            </label>
+            <label>
+              Richtung (melodisch)
+              <select name="intervalDirection">
+                <option value="both">auf- und abwärts</option>
+                <option value="up">aufwärts</option>
+                <option value="down">abwärts</option>
+              </select>
+            </label>
+            <div class="check-group full" id="interval-checks" role="group" aria-label="Intervalle"></div>
+          </fieldset>
+          <fieldset data-modes="chords">
+            <legend>Akkorde</legend>
+            <label>
+              Akkordart
+              <select name="chordKinds">
+                <option value="triads">Dreiklänge</option>
+                <option value="sevenths">Septakkorde</option>
+                <option value="both">Dreiklänge und Septakkorde</option>
+              </select>
+            </label>
+            <div class="check-group full" id="inversion-checks" role="group" aria-label="Lagen"></div>
+            <div class="check-group full" id="degree-checks" role="group" aria-label="Stufen"></div>
+            <p class="hint full">Die 3. Umkehrung gibt es nur bei Septakkorden. In Moll stammen V und vii° aus harmonischem Moll.</p>
+          </fieldset>
+          <fieldset data-modes="keys">
+            <legend>Tonarten erkennen</legend>
+            <label>Vorzeichnungen bis <select name="quizMaxAccidentals"></select></label>
+            <label class="check"><input type="checkbox" name="showCircle" /> Quintenzirkel als Hilfe zeigen</label>
+          </fieldset>
+          <fieldset data-modes="notes intervals chords">
             <legend>Lagen-Gewichtung</legend>
             <label>Kernzone ab <select name="coreLow"></select></label>
             <label>Kernzone bis <select name="coreHigh"></select></label>
@@ -94,16 +178,23 @@
             </p>
           </fieldset>
           <fieldset>
-            <legend>Anzeige</legend>
-            <label class="check"><input type="checkbox" name="showNoteNames" /> Notennamen auf den Tasten</label>
-            <label class="check"><input type="checkbox" name="showComputerKeys" /> Computertasten auf den Tasten</label>
+            <legend>Eingabe und Anzeige</legend>
+            <label class="check" data-modes="notes intervals chords"><input type="checkbox" name="showNoteNames" /> Notennamen auf den Tasten</label>
+            <label class="check" data-modes="notes intervals chords"><input type="checkbox" name="showComputerKeys" /> Computertasten auf den Tasten</label>
+            <label class="check" data-modes="intervals chords">
+              <input type="checkbox" name="selectionMode" /> Bildschirmtastatur: Töne auswählen und bestätigen
+            </label>
+            <label data-modes="intervals chords">
+              Zeitfenster für Akkorde (ms, 0 = ohne)
+              <input type="number" name="chordWindowMs" min="0" max="5000" step="50" inputmode="numeric" />
+            </label>
           </fieldset>
           <p class="error" id="settings-error" hidden></p>
         </form>
       </details>
 
       <details class="card panel">
-        <summary>Statistik pro Note</summary>
+        <summary>Statistik</summary>
         <div id="stats-groups" class="stats-groups"></div>
         <button type="button" id="reset-stats" class="danger">Statistik zurücksetzen</button>
       </details>

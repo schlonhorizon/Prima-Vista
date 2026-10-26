@@ -46,7 +46,11 @@ export class WeightedSelector implements ItemSelector {
   pick<T>(candidates: readonly Candidate<T>[]): T {
     if (candidates.length === 0) throw new Error('No candidates to choose from');
     let pool = candidates;
-    if (this.avoidRepeat && candidates.length > 1) pool = candidates.filter((c) => c.key !== this.lastKey);
+    if (this.avoidRepeat) {
+      const others = candidates.filter((c) => c.key !== this.lastKey);
+      // Several realizations can share one key; only avoid the repeat if there is an alternative.
+      if (others.length > 0) pool = others;
+    }
     let weights = pool.map((c) => this.weightOf(c));
     let total = weights.reduce((a, b) => a + b, 0);
     if (total <= 0) {

@@ -96,4 +96,10 @@ describe('WeightedSelector frequencies', () => {
     const seen = new Set(Array.from({ length: 50 }, () => sel.pick(items)));
     expect(seen).toEqual(new Set(['a', 'b']));
   });
+
+  it('still picks when every candidate belongs to the same element', () => {
+    const items = ['x1', 'x2'].map((item) => ({ item, key: 'same', baseWeight: 1 }));
+    const sel = new WeightedSelector({ random: mulberry32(2) });
+    for (let i = 0; i < 10; i++) expect(['x1', 'x2']).toContain(sel.pick(items));
+  });
 });
