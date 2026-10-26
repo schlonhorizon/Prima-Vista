@@ -12,6 +12,10 @@ Modi:
 - **Akkorde:** Stufenakkorde der Tonart als Dreiklänge und/oder Septakkorde, Grundstellung und
   Umkehrungen einzeln wählbar; danach Symbol, Stufe, Funktion und Lage („Am, vi, Tp,
   1. Umkehrung“), bei Fehlern fehlende und überzählige Töne.
+- **Rhythmus:** 1–4 Takte zum Metronom tippen (Klaviertaste, Leertaste oder Tippfläche), vier
+  Stufen bis zu Triolen und Sechzehnteln; Auswertung pro Note (auf den Punkt, zu früh, zu spät)
+  mit einstellbarer Toleranz, Metronom hörbar und als pulsierender Punkt, Kalibrierung der
+  Eingabeverzögerung.
 - **Tonarten:** Vorzeichnung erkennen, Dur- und parallele Moll-Tonart per Button wählen;
   Quintenzirkel als ausblendbare Hilfe, der nach der Antwort die Lösung hervorhebt.
 
@@ -82,6 +86,9 @@ src/
                Hilfslinien, Oktavierung), Tonumfang, Presets, Lagen-Gewichtung, Storage
   input/       InputHub + Quellen: Web MIDI, Computertastatur
   theory/      Musiktheorie: Intervalle, Tonarten, Tonleiter-Katalog, Stufenakkorde, Benennungen
+  rhythm/      Rhythmus: Notenwerte, Muster-Katalog, Generator, Zählsilben, Auswertung
+  timing/      Timing-Engine: Transport, Metronom, Latenz-Kalibrierung
+  audio/       Audio-Engine (Web Audio, synthetisch)
   knowledge/   Wissensebene: Tipps, Erklärungen, Lektionen, Markdown-Darstellung
   content/     Texte der Wissensebene (Markdown): lessons/ und knowledge/
   exercises/   Aufgabenmodell (Task/Step), Generator „Einzelnoten“, Matcher, Auswahl

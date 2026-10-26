@@ -15,7 +15,7 @@ export const MODES: readonly ModeInfo[] = [
   { id: 'intervals', label: 'Intervalle', ready: true },
   { id: 'chords', label: 'Akkorde', ready: true },
   { id: 'keys', label: 'Tonarten', ready: true },
-  { id: 'rhythm', label: 'Rhythmus', ready: false },
+  { id: 'rhythm', label: 'Rhythmus', ready: true },
   { id: 'progressions', label: 'Abfolgen', ready: false },
   { id: 'reading', label: 'Vorauslesen', ready: false },
   { id: 'leadsheets', label: 'Leadsheets', ready: false },

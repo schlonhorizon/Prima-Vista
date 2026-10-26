@@ -151,6 +151,35 @@ export class Trainer {
     if (!this.held) this.nextTimer = window.setTimeout(() => this.next(), this.timing.afterWrongMs);
   }
 
+  /**
+   * Result of a performed task (rhythm): the exercise UI evaluates the timing and
+   * reports one record per element (pattern). The trainer then waits until resume().
+   */
+  answerPerformance(
+    correct: boolean,
+    records: readonly { key: string; ok: boolean; ms: number | null }[],
+    answerText: string,
+  ): void {
+    const task = this.task;
+    if (!task || task.answer !== 'perform' || this.waiting) return;
+    this.waiting = true;
+    this.held = true;
+    for (const r of records) this.stats.record(r.key, { ok: r.ok, ms: r.ms, assisted: this.assisted });
+    this.callbacks.onResult({
+      task,
+      correct,
+      reactionMs: null,
+      expected: [],
+      played: [],
+      missing: [],
+      extra: [],
+      timeout: false,
+      assisted: this.assisted,
+      skipped: false,
+      answerText,
+    });
+  }
+
   /** Answer for choice tasks (e.g. key recognition). */
   answerChoice(correct: boolean, answerText: string): void {
     if (!this.task || this.task.answer !== 'choice' || this.waiting) return;
@@ -163,7 +192,8 @@ export class Trainer {
 
   private onNote = (event: NoteEvent): void => {
     // While held, any key on the piano continues – handy without a computer keyboard.
-    if (this.held && event.type === 'on') {
+    // Performed tasks (rhythm) handle continuing themselves (taps would race).
+    if (this.held && event.type === 'on' && this.task?.answer !== 'perform') {
       this.resume();
       return;
     }

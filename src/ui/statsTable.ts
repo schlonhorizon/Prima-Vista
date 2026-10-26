@@ -74,7 +74,7 @@ export class StatsTable {
     const table = document.createElement('table');
     table.className = 'stats-table';
     const head = document.createElement('tr');
-    for (const [i, title] of [...group.columns, 'Richtig', 'Falsch', 'Quote', 'Ø Zeit', 'Mit Hilfe', 'Übersprungen'].entries()) {
+    for (const [i, title] of [...group.columns, 'Richtig', 'Falsch', 'Quote', group.timeLabel ?? 'Ø Zeit', 'Mit Hilfe', 'Übersprungen'].entries()) {
       const th = document.createElement('th');
       th.textContent = title;
       if (i < group.columns.length) th.className = 'text';

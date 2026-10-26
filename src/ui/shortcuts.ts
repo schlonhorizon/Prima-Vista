@@ -21,7 +21,7 @@ export const SHORTCUTS = {
   next: { code: 'Enter', display: 'Enter', description: 'Weiter, wenn eine Erklärung offen ist' },
   close: { code: 'Escape', display: 'Esc', description: 'Karte, Lektion oder Übersicht schließen' },
   help: { code: null, key: '?', display: '?', description: 'Diese Übersicht' },
-  confirm: { code: 'Space', display: 'Leertaste', description: 'Auswahl auf der Bildschirmtastatur bestätigen' },
+  confirm: { code: 'Space', display: 'Leertaste', description: 'Auswahl auf der Bildschirmtastatur bestätigen; im Rhythmus-Modus tippen' },
 } as const satisfies Record<string, Shortcut>;
 
 export type ShortcutId = keyof typeof SHORTCUTS;

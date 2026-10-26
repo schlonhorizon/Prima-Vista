@@ -17,6 +17,9 @@ import {
   type Interval,
 } from '../theory/interval';
 import { fifthsOf, germanKeyName, keyFromFifths, keyScale, keySignature, type Key } from '../theory/key';
+import { countRhythm } from '../rhythm/counting';
+import type { RhythmEvaluation } from '../rhythm/evaluate';
+import { patternBars } from '../rhythm/generator';
 import { section } from './content';
 import {
   accidentalText,
@@ -303,10 +306,61 @@ export const keyKnowledge: KnowledgeProvider = {
   },
 };
 
+// --- Rhythm ---------------------------------------------------------------
+
+/** Evaluation of the last performance per task (set by the rhythm UI before the result). */
+export const rhythmOutcomes = new WeakMap<Task, RhythmEvaluation>();
+
+export const rhythmKnowledge: KnowledgeProvider = {
+  lesson: 'lessons/rhythm',
+
+  tip(task) {
+    const i = info(task, 'rhythm');
+    if (!i) return null;
+    return text('rhythm', 'tipp', {
+      zaehlen: countRhythm(patternBars(i.pattern, i.bars)),
+      tempo: String(i.bpm),
+    });
+  },
+
+  explain(task) {
+    const i = info(task, 'rhythm');
+    if (!i) return null;
+    const seen = new Set<string>();
+    const patterns = i.pattern.cells
+      .filter((c) => !seen.has(c.cell.id) && seen.add(c.cell.id))
+      .map((c) => `- **${c.cell.name}** (${countRhythm([c.cell.events])}): ${text('rhythm', `muster.${c.cell.id}`)}`)
+      .join('\n');
+    const outcome = rhythmOutcomes.get(task);
+    let result = '';
+    if (outcome) {
+      const total = outcome.notes.length;
+      result = text('rhythm', 'ergebnis', {
+        punkt: String(outcome.onTime),
+        gesamt: String(total),
+        frueh: String(outcome.early),
+        spaet: String(outcome.late),
+        fehlt: String(outcome.missed),
+        extra: String(outcome.extraTaps.length),
+      });
+      const mean = outcome.meanDeviation;
+      if (mean !== null && Math.abs(mean) >= 15) {
+        result += `\n\n${text('rhythm', mean < 0 ? 'tendenz.frueh' : 'tendenz.spaet', { ms: String(Math.abs(mean)) })}`;
+      }
+    }
+    return text('rhythm', 'erklaerung', {
+      zaehlen: countRhythm(patternBars(i.pattern, i.bars)),
+      muster: patterns,
+      ergebnis: result,
+    });
+  },
+};
+
 /** Knowledge per exercise id. */
 export const KNOWLEDGE: Readonly<Record<string, KnowledgeProvider>> = {
   note: noteKnowledge,
   interval: intervalKnowledge,
   chord: chordKnowledge,
   keysig: keyKnowledge,
+  rhythm: rhythmKnowledge,
 };

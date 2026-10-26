@@ -3,6 +3,8 @@ import type { KeyValueStorage } from '../core/storage';
 import { ChordExercise } from '../exercises/chords';
 import { IntervalExercise } from '../exercises/intervals';
 import { checkKeyAnswer, KeyQuizExercise } from '../exercises/keyQuiz';
+import { RhythmExercise } from '../exercises/rhythm';
+import { AudioEngine } from '../audio/audioEngine';
 import { KeyContext } from '../exercises/keyContext';
 import { WeightedSelector } from '../exercises/selection';
 import { SingleNoteExercise } from '../exercises/singleNote';
@@ -19,6 +21,7 @@ import { Trainer, type TaskResult } from '../trainer/trainer';
 import { KNOWLEDGE } from '../knowledge/providers';
 import { KeyQuizPanel } from './keyQuizPanel';
 import { KnowledgeUi } from './knowledgeUi';
+import { RhythmUi } from './rhythmUi';
 import { OnScreenKeyboard } from './onScreenKeyboard';
 import { SettingsForm } from './settingsForm';
 import { isTypingTarget, labelShortcutHints, matches, SHORTCUTS, type ShortcutId } from './shortcuts';
@@ -61,6 +64,8 @@ export class App {
   private form!: SettingsForm;
   private keyQuiz!: KeyQuizPanel;
   private knowledge!: KnowledgeUi;
+  private rhythm!: RhythmUi;
+  private audio = new AudioEngine();
   private session: SessionStats = { correct: 0, wrong: 0, timeSum: 0, timeCount: 0 };
 
   private feedbackEl = $('feedback');
@@ -101,6 +106,8 @@ export class App {
         () => Object.keys(this.stats.allItems()),
       ),
       keys: new KeyQuizExercise(() => ({ staff: this.settings.staff, settings: this.settings.keyQuiz }), selector()),
+      // Rhythm patterns repeat naturally (quarter, quarter …), so no repeat avoidance.
+      rhythm: new RhythmExercise(() => this.settings.rhythm, new WeightedSelector({ avoidRepeat: false })),
     };
     this.trainer = new Trainer(this.exercise(), this.hub, this.stats, {
       onTask: (task) => this.showTask(task),
@@ -122,6 +129,9 @@ export class App {
     }
     this.setupSelection();
     this.setupShortcuts();
+    this.rhythm = new RhythmUi(this.hub, this.audio, this.trainer, () => this.settings.rhythm, (latencyMs) =>
+      this.commit({ ...this.settings, rhythm: { ...this.settings.rhythm, latencyMs } }),
+    );
     this.knowledge = new KnowledgeUi({
       trainer: this.trainer,
       autoExplain: () => this.settings.autoExplain,
@@ -157,7 +167,8 @@ export class App {
       if (window.innerWidth === lastWidth) return;
       lastWidth = window.innerWidth;
       const task = this.trainer.currentTask();
-      if (task) this.staff.render(task.layout, task.steps, 'none', task.key);
+      if (task?.info?.kind === 'rhythm') this.rhythm.redraw();
+      else if (task) this.staff.render(task.layout, task.steps, 'none', task.key);
     });
   }
 
@@ -209,7 +220,10 @@ export class App {
   // --- Trainer callbacks -------------------------------------------------
 
   private showTask(task: Task): void {
-    this.staff.render(task.layout, task.steps, 'none', task.key);
+    const rhythm = task.info?.kind === 'rhythm';
+    $('rhythm-card').hidden = !rhythm;
+    this.rhythm.show(rhythm ? task : null);
+    if (!rhythm) this.staff.render(task.layout, task.steps, 'none', task.key);
     // Name the key for playing tasks; for choice tasks the key is the question.
     $('task-caption').textContent = task.key && task.answer === 'play' ? germanKeyName(task.key) : '';
     this.feedbackEl.textContent = task.message ?? '';
@@ -217,7 +231,7 @@ export class App {
     this.detailEl.textContent = '';
     const quiz = task.exerciseId === this.exercises.keys?.id;
     $('key-quiz').hidden = !quiz;
-    $('keyboard-card').hidden = quiz;
+    $('keyboard-card').hidden = quiz || rhythm;
     if (quiz) this.keyQuiz.reset();
     const multi = task.answer === 'play' && taskPitches(task).length > 1;
     this.keyboard.setSelectionMode(this.settings.selectionMode && multi);
@@ -227,6 +241,7 @@ export class App {
 
   private showResult(r: TaskResult): void {
     const { task } = r;
+    if (task.info?.kind === 'rhythm') return this.showRhythmResult(r);
     this.staff.render(task.layout, task.steps, r.skipped ? 'none' : r.correct ? 'correct' : 'wrong', task.key);
     const time = r.reactionMs !== null ? ` · ${formatMs(r.reactionMs)}` : '';
     const names = (midis: readonly number[]) => midis.map((m) => germanName(midiToPitch(m))).join(', ');
@@ -270,6 +285,28 @@ export class App {
     this.renderSession();
   }
 
+  /** Rhythm: the notation with per-note marks is drawn by RhythmUi. */
+  private showRhythmResult(r: TaskResult): void {
+    const assisted = r.assisted ? ' (mit Tipp)' : '';
+    if (r.skipped) {
+      this.rhythm.abort();
+      this.feedbackEl.textContent = 'Übersprungen – so wird gezählt:';
+      this.feedbackEl.className = 'feedback skipped';
+    } else if (r.correct) {
+      this.session.correct++;
+      this.feedbackEl.textContent = `Richtig${assisted}: ${r.answerText}`;
+      this.feedbackEl.className = 'feedback correct';
+    } else {
+      this.session.wrong++;
+      this.feedbackEl.textContent = `Noch nicht ganz${assisted}: ${r.answerText}`;
+      this.feedbackEl.className = 'feedback wrong';
+    }
+    this.detailEl.textContent = `Zählen: ${r.task.detail ?? ''}`;
+    this.knowledge.onResult(r.task);
+    $('m-last').textContent = '–';
+    this.renderSession();
+  }
+
   // --- Selection mode (on-screen keyboard, several notes) -----------------
 
   private setupSelection(): void {
@@ -306,6 +343,10 @@ export class App {
       run('close', () => this.knowledge.closeCard()) ||
       (!onButton && run('next', () => this.knowledge.continueIfHeld())) ||
       (!onButton && run('confirm', () => {
+        if (this.rhythm.isActive()) {
+          if (!e.repeat) this.rhythm.input(e.timeStamp || performance.now());
+          return;
+        }
         if (!this.keyboard.isSelecting()) return false;
         this.keyboard.confirmSelection();
       }));
@@ -408,7 +449,11 @@ export class App {
     const exerciseKey = (s: Settings) => {
       const copy: Partial<Settings> = { ...s };
       for (const k of DISPLAY_ONLY) delete copy[k];
-      return JSON.stringify({ ...copy, keyQuiz: { ...s.keyQuiz, showCircle: null } });
+      return JSON.stringify({
+        ...copy,
+        keyQuiz: { ...s.keyQuiz, showCircle: null },
+        rhythm: { ...s.rhythm, sound: null, volume: null, latencyMs: null },
+      });
     };
     const modeChanged = next.practice !== this.settings.practice;
     const exerciseChanged = exerciseKey(next) !== exerciseKey(this.settings);
@@ -420,7 +465,7 @@ export class App {
     else {
       // Display-only change: re-evaluate the selection mode for the current task.
       const task = this.trainer.currentTask();
-      if (task && !this.trainer.isWaiting()) this.showTask(task);
+      if (task && !this.trainer.isWaiting() && task.info?.kind !== 'rhythm') this.showTask(task);
     }
   }
 

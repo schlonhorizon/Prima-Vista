@@ -82,6 +82,19 @@
         <div class="metric"><span class="metric-value" id="m-last">–</span><span class="metric-label">Letzte</span></div>
       </section>
 
+      <section class="card rhythm-card" id="rhythm-card" hidden>
+        <div class="rhythm-head">
+          <span class="metronome-dot" id="metronome-dot" aria-hidden="true"></span>
+          <span class="rhythm-count" id="rhythm-count"></span>
+          <p class="rhythm-status" id="rhythm-status" aria-live="polite"></p>
+          <button type="button" id="calibrate-button">Eingabe kalibrieren</button>
+        </div>
+        <div class="rhythm-pad" id="rhythm-pad" role="button" aria-label="Tippfläche">
+          <span class="rhythm-pad-label">Hier tippen</span>
+          <span class="rhythm-pad-hint">oder Leertaste · beliebige Klaviertaste · MIDI</span>
+        </div>
+      </section>
+
       <section class="card keyboard-card" id="keyboard-card">
         <div class="keyboard-bar">
           <span class="eyebrow">Computertastatur · Oktave <strong id="pc-octave">4</strong></span>
@@ -101,7 +114,7 @@
       <details class="card panel">
         <summary>Einstellungen</summary>
         <form id="settings" class="settings">
-          <fieldset>
+          <fieldset data-modes="notes intervals chords keys">
             <legend>Notensystem und Tonumfang</legend>
             <label>
               Notensystem
@@ -184,6 +197,36 @@
             <label>Vorzeichnungen bis <select name="quizMaxAccidentals"></select></label>
             <label class="check"><input type="checkbox" name="showCircle" /> Quintenzirkel als Hilfe zeigen</label>
           </fieldset>
+          <fieldset data-modes="rhythm">
+            <legend>Rhythmus</legend>
+            <label>Stufe <select name="rhythmLevel"></select></label>
+            <label>
+              Takte
+              <select name="rhythmBars">
+                <option value="1">1 Takt</option>
+                <option value="2">2 Takte</option>
+                <option value="3">3 Takte</option>
+                <option value="4">4 Takte</option>
+              </select>
+            </label>
+            <label>Tempo (Schläge pro Minute) <input type="number" name="rhythmBpm" min="30" max="240" step="1" inputmode="numeric" /></label>
+            <label>Toleranz (± ms) <input type="number" name="rhythmTolerance" min="10" max="300" step="5" inputmode="numeric" /></label>
+            <label>
+              Einzählen
+              <select name="rhythmCountIn">
+                <option value="0">ohne</option>
+                <option value="1">1 Takt</option>
+                <option value="2">2 Takte</option>
+              </select>
+            </label>
+            <label>Eingabe-Versatz (ms) <input type="number" name="rhythmLatency" min="-500" max="500" step="1" inputmode="numeric" /></label>
+            <label class="check"><input type="checkbox" name="rhythmSound" /> Metronom hörbar</label>
+            <label>Lautstärke <input type="range" name="rhythmVolume" min="0" max="100" step="5" /></label>
+            <p class="hint full">
+              Der Messingpunkt zeigt den Schlag immer, auch ohne Ton. Den Eingabe-Versatz misst
+              „Eingabe kalibrieren“: ein paar Mal zum Klick tippen, der Wert wird von jedem Tipp abgezogen.
+            </p>
+          </fieldset>
           <fieldset data-modes="notes intervals chords">
             <legend>Lagen-Gewichtung</legend>
             <label>Kernzone ab <select name="coreLow"></select></label>
@@ -207,7 +250,7 @@
           </fieldset>
           <fieldset>
             <legend>Eingabe und Anzeige</legend>
-            <label class="check" data-modes="notes intervals chords"><input type="checkbox" name="computerPiano" /> Computertastatur als Klavier</label>
+            <label class="check" data-modes="notes intervals chords rhythm"><input type="checkbox" name="computerPiano" /> Computertastatur als Klavier</label>
             <label class="check" data-modes="notes intervals chords"><input type="checkbox" name="showNoteNames" /> Notennamen auf den Tasten</label>
             <label class="check" data-modes="notes intervals chords"><input type="checkbox" name="showComputerKeys" /> Computertasten auf den Tasten</label>
             <label class="check" data-modes="intervals chords">
